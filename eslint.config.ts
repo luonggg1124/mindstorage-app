@@ -19,6 +19,8 @@ export default defineConfig([
             ".husky/",
             ".vscode/",
             "src/components/ui/",
+            "src/data/client",
+            "src/data/core",
             "postcss.config.cjs",
             "tailwind.config.cjs",
             ".prettierrc.cjs",
