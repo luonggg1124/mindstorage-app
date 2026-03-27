@@ -3,7 +3,7 @@ import { Outlet } from "react-router";
 const MainLayout = () => {
   return (
     <div>
-      MainLayout 1
+      MainLayout 
       <Outlet />
     
     </div>
