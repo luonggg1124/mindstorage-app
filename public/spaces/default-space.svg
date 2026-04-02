@@ -1,0 +1,13 @@
+<svg width="1200" height="640" viewBox="0 0 1200 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="640" rx="32" fill="url(#paint0_linear)"/>
+  <circle cx="1020" cy="110" r="110" fill="#FFFFFF" fill-opacity="0.10"/>
+  <circle cx="180" cy="500" r="150" fill="#FFFFFF" fill-opacity="0.08"/>
+  <text x="72" y="260" fill="white" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="700">New Space</text>
+  <text x="72" y="318" fill="#E2E8F0" font-family="Arial, Helvetica, sans-serif" font-size="28">Workspace preview image</text>
+  <defs>
+    <linearGradient id="paint0_linear" x1="0" y1="0" x2="1200" y2="640" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F766E"/>
+      <stop offset="1" stop-color="#1D4ED8"/>
+    </linearGradient>
+  </defs>
+</svg>

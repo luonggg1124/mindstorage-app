@@ -1,0 +1,51 @@
+/* Editor Styles */
+.tiptap {
+  outline: none;
+}
+
+/* Image Alignment Styles */
+.image-align-left {
+  display: block;
+  margin: 0 auto 0 0;
+}
+
+.image-align-center {
+  display: block;
+  margin: 0 auto;
+}
+
+.image-align-right {
+  display: block;
+  margin: 0 0 0 auto;
+}
+
+/* Resizable Image Styles */
+.resizable-image {
+  position: relative;
+}
+
+.resizable-image img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Image alignment based on data attribute */
+.resizable-image[data-align="left"] {
+  text-align: left;
+}
+
+.resizable-image[data-align="center"] {
+  text-align: center;
+}
+
+.resizable-image[data-align="right"] {
+  text-align: right;
+}
+
+.resizable-image[data-align="center"] img {
+  margin: 0 auto;
+}
+
+.resizable-image[data-align="right"] img {
+  margin-left: auto;
+}

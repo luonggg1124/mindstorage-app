@@ -26,7 +26,13 @@ export default defineConfig([
             ".prettierrc.cjs",
             "vite.config.ts",
             "components.json",
-            "src/components/animations"
+            "src/components/animations",
+            "src/components/custom",
+            "src/data/form.config.ts",
+            "src/data/client.config.ts",
+            "src/utils/path.ts",
+            "src/utils/stronghold.ts",
+            "src/lib/toast.ts"
         ]
   }
 ]);

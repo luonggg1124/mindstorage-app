@@ -82,7 +82,30 @@
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
 }
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
 
+/* Global scrollbar: Hidden but functional */
+* {
+  scrollbar-width: none; /* Firefox */
+  scrollbar-color: transparent transparent;
+}
+
+/* Chrome/Edge/Safari */
+*::-webkit-scrollbar {
+  width: 0px;
+  display: none;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: transparent;
+}
 .dark {
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
