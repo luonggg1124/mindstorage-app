@@ -1,23 +1,49 @@
-import type { RegisterDraft } from "./types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { useEffect, useMemo } from "react";
+import { useAuth } from "@/data/api/auth";
+import { step3Schema } from "../schema";
+import type { Control, UseFormSetValue } from "react-hook-form";
+import { useWatch } from "react-hook-form";
+import type { RegisterSchema } from "../schema";
 
 type ThirdStepProps = {
-  value: RegisterDraft;
-  onChange: (next: RegisterDraft) => void;
-  onSendCode: () => void;
-  onVerifyCode: () => void;
-  isCodeSent: boolean;
+  control: Control<RegisterSchema>;
+  setValue: UseFormSetValue<RegisterSchema>;
+  onGateChange: (next: { canProceed: boolean; errorText: string }) => void;
 };
 
 export function ThirdStep({
-  value,
-  onChange,
-  onSendCode,
-  onVerifyCode,
-  isCodeSent,
+  control,
+  setValue,
+  onGateChange,
 }: ThirdStepProps) {
+  const { verifyEmail, verifyEmailState } = useAuth();
+  const email = useWatch({ control, name: "email" }) ?? "";
+  const session = useWatch({ control, name: "session" }) ?? "";
+  const code = useWatch({ control, name: "code" }) ?? "";
+  const agree = useWatch({ control, name: "agree" }) ?? false;
+  const isCodeSent = Boolean(session);
+
+  const gate = useMemo(() => {
+    if (verifyEmailState.error?.message) return { canProceed: false, errorText: verifyEmailState.error.message };
+    const res = step3Schema.safeParse({
+      email,
+      session,
+      code,
+      agree,
+    });
+    return {
+      canProceed: res.success,
+      errorText: res.success ? "" : res.error.issues[0]?.message ?? "Vui lòng kiểm tra lại.",
+    };
+  }, [agree, email, session, code, verifyEmailState.error?.message]);
+
+  useEffect(() => {
+    onGateChange(gate);
+  }, [gate, onGateChange]);
+
   return (
     <div className="space-y-4">
       <div>
@@ -28,14 +54,9 @@ export function ThirdStep({
           <Input
             id="email"
             type="email"
-            value={value.email}
+            value={email}
             onChange={(e) =>
-              onChange({
-                ...value,
-                email: e.target.value,
-                emailVerified: false,
-                emailCode: "",
-              })
+              setValue("email", e.target.value, { shouldDirty: true, shouldValidate: true })
             }
             required
             className="h-9 rounded-full border-slate-700 bg-slate-900 px-4 text-white placeholder:text-slate-500 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/30"
@@ -43,7 +64,14 @@ export function ThirdStep({
           />
           <Button
             type="button"
-            onClick={onSendCode}
+            disabled={verifyEmailState.isLoading}
+            onClick={async () => {
+              if (!/^\S+@\S+\.\S+$/.test(email.trim())) return;
+              const data = await verifyEmail(email.trim());
+              if (!data?.session) return;
+              setValue("session", data.session, { shouldDirty: true, shouldValidate: true });
+              setValue("code", "", { shouldDirty: true, shouldValidate: true });
+            }}
             variant="outline"
             size="sm"
             className="h-9 rounded-full border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800/60"
@@ -52,7 +80,7 @@ export function ThirdStep({
           </Button>
         </div>
         <p className="mt-1 text-xs text-slate-400">
-          Nhấn “Gửi mã” để nhận mã xác nhận (demo: mã được tạo ngay trong app).
+          Nhấn “Gửi mã” để nhận mã xác nhận.
         </p>
       </div>
 
@@ -65,8 +93,8 @@ export function ThirdStep({
             id="emailCode"
             type="text"
             inputMode="numeric"
-            value={value.emailCode}
-            onChange={(e) => onChange({ ...value, emailCode: e.target.value })}
+            value={code}
+            onChange={(e) => setValue("code", e.target.value, { shouldDirty: true, shouldValidate: true })}
             required
             disabled={!isCodeSent}
             className="h-9 rounded-full border-slate-700 bg-slate-900 px-4 text-white placeholder:text-slate-500 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/30 disabled:opacity-50"
@@ -74,7 +102,7 @@ export function ThirdStep({
           />
           <Button
             type="button"
-            onClick={onVerifyCode}
+            onClick={() => {}}
             disabled={!isCodeSent}
             size="sm"
             className="h-9 rounded-full bg-indigo-500 text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
@@ -83,20 +111,16 @@ export function ThirdStep({
           </Button>
         </div>
 
-        {value.emailVerified ? (
-          <p className="mt-2 text-xs text-emerald-300">Email đã được xác nhận.</p>
-        ) : (
-          <p className="mt-2 text-xs text-slate-400">
-            {isCodeSent ? "Vui lòng nhập mã và bấm “Xác nhận”." : "Bạn cần gửi mã trước."}
-          </p>
-        )}
+        <p className="mt-2 text-xs text-slate-400">
+          {isCodeSent ? "Vui lòng nhập mã (demo) sau đó tick đồng ý để tiếp tục." : "Bạn cần gửi mã trước."}
+        </p>
       </div>
 
       <label className="flex items-center gap-2 text-sm text-slate-300">
         <input
           type="checkbox"
-          checked={value.agree}
-          onChange={(e) => onChange({ ...value, agree: e.target.checked })}
+          checked={agree}
+          onChange={(e) => setValue("agree", e.target.checked, { shouldDirty: true, shouldValidate: true })}
           className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-indigo-500"
         />
         Tôi đồng ý các điều khoản và chính sách quyền riêng tư.

@@ -12,6 +12,8 @@ export type RegisterDraft = {
 
   // step 3
   email: string;
+  /** session trả về từ verifyEmail để submit kèm */
+  emailSession: string;
   emailCode: string;
   emailVerified: boolean;
 

@@ -75,7 +75,7 @@ export const removeStorage = async (key: string) => {
 };
 
 // Save changes to stronghold
-export const save = async () => {
+export const saveStorage = async () => {
   if (strongholdInstance) {
     await strongholdInstance.save();
   }
