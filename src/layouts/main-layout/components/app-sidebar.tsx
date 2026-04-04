@@ -33,11 +33,7 @@ const navigationItems = [
   },
 ];
 
-const sidebarUser = {
-  name: "Nguyen Van A",
-  email: "student@example.com",
-  avatar: "/avatars/user.jpg",
-};
+
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -63,7 +59,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter>
-        <NavUser user={sidebarUser} />
+        <NavUser  />
       </SidebarFooter>
     </Sidebar>
   );
