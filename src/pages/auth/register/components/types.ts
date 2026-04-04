@@ -7,6 +7,7 @@ export type RegisterDraft = {
   hobbies: string[];
 
   // step 2
+  intendedUse: string[];
   username: string;
   password: string;
 

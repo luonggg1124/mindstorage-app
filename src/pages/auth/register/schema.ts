@@ -9,6 +9,9 @@ export const registerSchema = z.object({
   hobbies: z.array(z.string()),
 
   // step 2
+  intendedUse: z
+    .array(z.string())
+    .min(1, "Vui lòng chọn ít nhất một mục đích sử dụng."),
   username: z
     .string()
     .trim()
@@ -25,7 +28,11 @@ export const registerSchema = z.object({
 export type RegisterSchema = z.infer<typeof registerSchema>;
 
 export const step1Schema = registerSchema.pick({ fullName: true, gender: true, hobbies: true });
-export const step2Schema = registerSchema.pick({ username: true, password: true });
+export const step2Schema = registerSchema.pick({
+  intendedUse: true,
+  username: true,
+  password: true,
+});
 export const step3Schema = registerSchema.pick({
   email: true,
   session: true,

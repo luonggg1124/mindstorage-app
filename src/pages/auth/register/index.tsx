@@ -8,12 +8,51 @@ import { Stepper } from "./components/stepper";
 import { FirstStep } from "./components/first-step";
 import { SecondStep } from "./components/second-step";
 import { ThirdStep } from "./components/third-step";
-import { Link } from "react-router";
+import type { NavigateFunction } from "react-router";
+import { Link, useNavigate } from "react-router";
 import clientPaths from "@/paths/client";
+import { useAuth } from "@/data/api/auth";
+import { toast } from "@/lib/toast";
+import { AuthDividerOr, GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 
 const steps = ["Thông tin cá nhân", "Tài khoản", "Xác thực email"];
 
+type RegisterGate = { canProceed: boolean; errorText: string };
+
+function notifyGateBlocked(gate: RegisterGate) {
+  if (!gate.canProceed) {
+    toast.warning(gate.errorText || "Vui lòng kiểm tra lại thông tin.");
+    return true;
+  }
+  return false;
+}
+
+async function submitRegisterForm(
+  values: RegisterSchema,
+  gate: RegisterGate,
+  registerAccount: ReturnType<typeof useAuth>["register"],
+  navigate: NavigateFunction,
+) {
+  if (notifyGateBlocked(gate)) return;
+  const data = await registerAccount({
+    email: values.email,
+    username: values.username,
+    password: values.password,
+    session: values.session,
+    code: values.code,
+    fullName: values.fullName,
+    hobbies: values.hobbies.length > 0 ? values.hobbies.join(", ") : "",
+    intendedUse: values.intendedUse.join(", "),
+  });
+  if (data) {
+    toast.success("Đăng ký thành công.");
+    navigate(clientPaths.space.list.getPath());
+  }
+}
+
 const RegisterPage = () => {
+  const navigate = useNavigate();
+  const { register: registerAccount, registerState } = useAuth();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const [gate, setGate] = useState<{ canProceed: boolean; errorText: string }>({
@@ -31,6 +70,7 @@ const RegisterPage = () => {
       fullName: "",
       gender: "MALE",
       hobbies: [],
+      intendedUse: [],
       username: "",
       password: "",
       email: "",
@@ -51,20 +91,16 @@ const RegisterPage = () => {
     return <ThirdStep control={form.control} setValue={form.setValue} onGateChange={handleGateChange} />;
   }, [form.control, form.setValue, handleGateChange, step]);
   return (
-    <form
-      onSubmit={form.handleSubmit((values) => {
-        if (!gate.canProceed) {
-          alert(gate.errorText || "Vui lòng kiểm tra lại thông tin.");
-          return;
-        }
-        alert(
-          `Đăng ký: ${values.fullName} | ${values.username} | ${values.email}${
-            values.hobbies.length ? ` | Sở thích: ${values.hobbies.join(", ")}` : ""
-          }`
-        );
-      })}
-      className="space-y-4"
-    >
+    <div className="space-y-4">
+      <GoogleSignInButton mode="register" />
+      <AuthDividerOr />
+
+      <form
+        onSubmit={form.handleSubmit((values) =>
+          submitRegisterForm(values, gate, registerAccount, navigate),
+        )}
+        className="space-y-4"
+      >
       <Stepper current={step} steps={steps} />
 
       <div className="rounded-xl border border-white/10 bg-slate-950/15 p-4 backdrop-blur overflow-hidden">
@@ -80,9 +116,9 @@ const RegisterPage = () => {
         </div>
       </div>
 
-      {gate.errorText && (
+      {(gate.errorText || registerState.error?.message) && (
         <div className="rounded-lg border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-          {gate.errorText}
+          {registerState.error?.message ?? gate.errorText}
         </div>
       )}
 
@@ -103,10 +139,7 @@ const RegisterPage = () => {
           <button
             type="button"
             onClick={() => {
-              if (!gate.canProceed) {
-                alert(gate.errorText || "Vui lòng kiểm tra lại thông tin.");
-                return;
-              }
+              if (notifyGateBlocked(gate)) return;
               setDirection("forward");
               setStep((s) => Math.min(2, s + 1));
             }}
@@ -117,10 +150,10 @@ const RegisterPage = () => {
         ) : (
           <button
             type="submit"
-            disabled={!gate.canProceed}
+            disabled={!gate.canProceed || registerState.isLoading}
             className="rounded-full bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Đăng ký
+            {registerState.isLoading ? "Đang đăng ký…" : "Đăng ký"}
           </button>
         )}
       </div>
@@ -131,7 +164,8 @@ const RegisterPage = () => {
           Đăng nhập
         </Link>
       </p>
-    </form>
+      </form>
+    </div>
   );
 };
 

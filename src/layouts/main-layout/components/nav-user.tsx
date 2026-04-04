@@ -1,4 +1,6 @@
-import { Link } from "react-router"
+import { useCallback } from "react"
+import { Link, useNavigate } from "react-router"
+import clientPaths from "@/paths/client"
 
 import {
   Avatar,
@@ -20,18 +22,21 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { EllipsisVerticalIcon, CircleUserRoundIcon, CreditCardIcon, BellIcon, LogOutIcon } from "lucide-react"
+import { EllipsisVerticalIcon, CircleUserRoundIcon, LogOutIcon } from "lucide-react"
+import { useAuth } from "@/data/api/auth"
+import LoadingDots from "@/components/animate/loading-dots"
 
-export function NavUser({
-  user,
-}: {
-  user: {
-    name: string
-    email: string
-    avatar: string
-  }
-}) {
+export function NavUser() {
   const { isMobile } = useSidebar()
+  const navigate = useNavigate()
+  const { logout, logoutState, user } = useAuth()
+
+  const handleLogout = useCallback(async () => {
+    const ok = await logout()
+    if (ok) {
+      navigate(clientPaths.auth.login.getPath(), { replace: true })
+    }
+  }, [logout, navigate])
 
   return (
     <SidebarMenu>
@@ -40,16 +45,16 @@ export function NavUser({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="cursor-pointer transition-colors hover:bg-white/10 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarImage src={user?.avatarUrl ?? ""} alt={user?.fullName ?? ""} />
+                <AvatarFallback className="rounded-lg">{user?.fullName?.charAt(0) ?? ""}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate font-medium">{user?.fullName ?? ""}</span>
                 <span className="truncate text-xs text-muted-foreground">
-                  {user.email}
+                  {user?.email ?? ""}
                 </span>
               </div>
               <EllipsisVerticalIcon className="ml-auto size-4" />
@@ -64,41 +69,38 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarImage src={user?.avatarUrl ?? ""} alt={user?.fullName ?? ""} />
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate font-medium">{user?.fullName ?? ""}</span>
                   <span className="truncate text-xs text-muted-foreground">
-                    {user.email}
+                    {user?.email ?? ""}
                   </span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem
+                asChild
+                className="cursor-pointer transition-colors hover:bg-white/10 focus:bg-white/10"
+              >
                 <Link to="/my-profile">
                   <CircleUserRoundIcon />
-                  Profile
+                  Hồ sơ cá nhân
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCardIcon
-                />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BellIcon
-                />
-                Notifications
-              </DropdownMenuItem>
+
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOutIcon
-              />
-              Log out
+            <DropdownMenuItem
+              disabled={logoutState.isLoading}
+              onSelect={handleLogout}
+              className="cursor-pointer transition-colors hover:bg-white/10 focus:bg-white/10"
+            >
+              <LogOutIcon />
+              {logoutState.isLoading ? <>Đang đăng xuất <LoadingDots/></> : "Đăng xuất"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

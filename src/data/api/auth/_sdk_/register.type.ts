@@ -1,3 +1,4 @@
+import { IUser } from "@/data/models/user";
 
 
 export type RegisterRequest = {
@@ -8,8 +9,8 @@ export type RegisterRequest = {
         session: string;
         code: string;
         fullName: string;
-        hobbies: string[];
-
+        hobbies: string;
+        intendedUse: string;
     }
 }
 
@@ -18,6 +19,7 @@ export type RegisterResponse = {
         accessToken: string;
         refreshToken: string;
         refreshTokenExpiresIn: number;
+        user: IUser;
     }
 }
 export type RegisterError = {
