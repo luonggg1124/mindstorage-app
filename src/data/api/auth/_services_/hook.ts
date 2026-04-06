@@ -5,14 +5,17 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AuthSDK } from "../_sdk_";
 import { useAuthStore } from "./store";
 
-export { useAuthStore } from "./store";
+export { initAuth, bootstrapAuthAfterPersist } from "./init-auth";
 
 export const useAuth = () => {
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
-  const token = useAuthStore((s) => s.token);
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const refreshToken = useAuthStore((s) => s.refreshToken);
   const hasHydrated = useAuthStore((s) => s.hasHydrated);
-  const setToken = useAuthStore((s) => s.setToken);
+  const authBootstrapDone = useAuthStore((s) => s.authBootstrapDone);
+  const setAccessToken = useAuthStore((s) => s.setAccessToken);
+  const setRefreshToken = useAuthStore((s) => s.setRefreshToken);
   const setUser = useAuthStore((s) => s.setUser);
   const clear = useAuthStore((s) => s.clear);
 
@@ -23,20 +26,6 @@ export const useAuth = () => {
     isLoading: false,
     error: undefined,
   });
-
-  const logout = useCallback(async () => {
-    setLogoutState({ isLoading: true, error: undefined });
-    try {
-      clear();
-      queryClient.clear();
-      setLogoutState({ isLoading: false, error: undefined });
-      return true;
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Đăng xuất thất bại.";
-      setLogoutState({ isLoading: false, error: { message } });
-      return false;
-    }
-  }, [clear, queryClient]);
 
   const [verifyEmailState, setVerifyEmailState] = useState<{
     isLoading: boolean;
@@ -74,6 +63,19 @@ export const useAuth = () => {
     error: undefined,
   });
 
+  const logout = useCallback(async () => {
+    setLogoutState({ isLoading: true, error: undefined });
+    try {
+      clear();
+      queryClient.clear();
+      setLogoutState({ isLoading: false, error: undefined });
+      return true;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Đăng xuất thất bại.";
+      setLogoutState({ isLoading: false, error: { message } });
+      return false;
+    }
+  }, [clear, queryClient]);
   const verifyEmail = async (email: string) => {
     setVerifyEmailState({ isLoading: true, error: undefined });
     const { data, error } = await AuthSDK.verifyEmail({
@@ -119,11 +121,8 @@ export const useAuth = () => {
       return undefined;
     }
     if (data) {
-      setToken({
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
-        refreshTokenExpiresIn: data.refreshTokenExpiresIn,
-      });
+      setAccessToken(data.accessToken);
+      setRefreshToken(data.refreshToken);
       setUser(data.user);
       setRegisterState({ isLoading: false, error: undefined });
       return data;
@@ -144,12 +143,11 @@ export const useAuth = () => {
       setLoginState({ isLoading: false, error });
       return undefined;
     }
+    
+    
     if (data) {
-      setToken({
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
-        refreshTokenExpiresIn: data.refreshTokenExpiresIn,
-      });
+      setAccessToken(data.accessToken);
+      setRefreshToken(data.refreshToken);
       setUser(data.user);
       setLoginState({ isLoading: false, error: undefined });
       return data;
@@ -160,8 +158,10 @@ export const useAuth = () => {
 
   return {
     user,
-    token,
+    accessToken,
+    refreshToken,
     hasHydrated,
+    authBootstrapDone,
     verifyEmail,
     verifyEmailState,
     register,

@@ -5,7 +5,7 @@ export enum UserGender {
     OTHER = "OTHER",
 }
 export interface IUser {
-    id: string;
+    id: number;
     username: string;
     email: string;
     fullName: string | null;

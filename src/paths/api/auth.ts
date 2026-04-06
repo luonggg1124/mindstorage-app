@@ -14,6 +14,14 @@ const authPaths = {
         path: "/api/auth/login",
         getPath: (queries?: Record<string, string | number | boolean>) => `/api/auth/login${buildQueryString(queries)}`
     },
+    me: {
+        path: "/api/auth/me",
+        getPath: (queries?: Record<string, string | number | boolean>) => `/api/auth/me${buildQueryString(queries)}`
+    },
+    refreshToken: {
+        path: "/api/auth/refresh-token",
+        getPath: (queries?: Record<string, string | number | boolean>) => `/api/auth/refresh-token${buildQueryString(queries)}`
+    },
 }
 
 export default authPaths;

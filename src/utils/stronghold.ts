@@ -7,7 +7,7 @@ import { appDataDir } from '@tauri-apps/api/path';
 
 const initStronghold = async () => {
   const vaultPath = `${await appDataDir()}/vault.hold`;
-  const vaultPassword = 'vault password';
+  const vaultPassword = 'louis1124';
   const stronghold = await Stronghold.load(vaultPath, vaultPassword);
 
   let client: Client;

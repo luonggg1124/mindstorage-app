@@ -1,4 +1,4 @@
-import { IUser } from "@/data/models/user";
+import type { IUser } from "@/data/models/user";
 
 export type LoginRequest = {
   body: {
@@ -7,15 +7,11 @@ export type LoginRequest = {
   };
 };
 
-
-
-/** Giống register; hỗ trợ 200 hoặc 201 tùy backend */
 export type LoginResponse = {
- 
   201: {
+    refreshTokenExpiresIn: number;
     accessToken: string;
     refreshToken: string;
-    refreshTokenExpiresIn: number;
     user: IUser;
   };
 };

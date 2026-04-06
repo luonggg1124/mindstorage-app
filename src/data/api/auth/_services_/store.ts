@@ -4,29 +4,35 @@ import { getStorage, removeStorage, saveStorage, setStorage } from "@/utils/stro
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import { CACHE_KEYS } from "@/constants";
-import { IUser } from "@/data/models/user";
+import type { IUser } from "@/data/models/user";
 
 const AUTH_STORAGE_KEY = CACHE_KEYS.AUTH_STORE;
 
 type AuthStore = {
   user?: IUser;
-  token?: {
-    accessToken: string;
-    refreshToken: string;
-    refreshTokenExpiresIn: number;
-  };
+  accessToken?: string;
+  refreshToken?: string;
   hasHydrated: boolean;
+  /** true sau khi initAuth (refresh + /me) xong hoặc sau clear — tránh redirect trước khi đồng bộ session. */
+  authBootstrapDone: boolean;
   setUser: (next?: IUser) => void;
-  setToken: (next?: AuthStore["token"]) => void;
+  setAccessToken: (next?: string) => void;
+  setRefreshToken: (next?: string) => void;
   setHasHydrated: (next: boolean) => void;
+  setAuthBootstrapDone: (next: boolean) => void;
   clear: () => void;
 };
 
-type AuthPersistedState = Pick<AuthStore, "user" | "token">;
+/** Chỉ lưu Stronghold: refreshToken, không lưu expires / access / user. */
+type AuthPersistedState = {
+  refreshToken?: string;
+};
 
 const strongholdStateStorage = {
   getItem: async (name: string) => {
-    return (await getStorage(name)) ?? null;
+    const v = (await getStorage(name)) ?? null;
+    console.log('v', v);
+    return v;
   },
   setItem: async (name: string, value: string) => {
     await setStorage(name, value);
@@ -43,29 +49,49 @@ export const useAuthStore = create<AuthStore>()(
     persist(
       (set) => ({
         user: undefined,
-        token: undefined,
+        accessToken: undefined,
+        refreshToken: undefined,
         hasHydrated: false,
+        authBootstrapDone: false,
         setUser: (next) => set({ user: next }),
-        setToken: (next) => set({ token: next }),
+        setAccessToken: (next) => set({ accessToken: next }),
+        setRefreshToken: (next) => set({ refreshToken: next }),
         setHasHydrated: (next) => set({ hasHydrated: next }),
-        clear: () => set({ user: undefined, token: undefined, hasHydrated: true }, false, "auth/clear"),
+        setAuthBootstrapDone: (next) => set({ authBootstrapDone: next }),
+        clear: () =>
+          set(
+            { user: undefined, accessToken: undefined, refreshToken: undefined, hasHydrated: true, authBootstrapDone: true },
+            false,
+            "auth/clear",
+          ),
       }),
       {
         name: AUTH_STORAGE_KEY,
         storage: createJSONStorage<AuthPersistedState>(() => strongholdStateStorage),
-        partialize: (state) => ({
-          user: state.user,
-          token: state.token,
-        }),
-        onRehydrateStorage: () => (state) => {
-          state?.setHasHydrated(true);
+        version: 2,
+        partialize: (state): AuthPersistedState => {
+          const rt = state.refreshToken;
+          if (!rt) return {};
+          return { refreshToken: rt };
         },
-        migrate: (persistedState) => {
-          const state = persistedState as Partial<AuthStore>;
-          return {
-            user: state?.user ?? undefined,
-            token: state?.token ?? undefined,
-          } as AuthPersistedState;
+        onRehydrateStorage: () => (state) => {
+          (state ?? useAuthStore.getState()).setHasHydrated(true);
+        },
+        migrate: (persistedState): AuthPersistedState => {
+          const legacy = persistedState as {
+            user?: unknown;
+            token?: {
+              accessToken?: string;
+              refreshToken?: string;
+              refreshTokenExpiresIn?: number;
+            };
+            refreshToken?: string;
+          };
+          const rt = legacy.refreshToken ?? legacy.token?.refreshToken;
+          if (rt != null && rt !== "") {
+            return { refreshToken: rt };
+          }
+          return {};
         },
       },
     ),
@@ -74,3 +100,7 @@ export const useAuthStore = create<AuthStore>()(
     },
   ),
 );
+
+useAuthStore.persist.onFinishHydration(() => {
+  void import("./init-auth").then((m) => m.bootstrapAuthAfterPersist());
+});

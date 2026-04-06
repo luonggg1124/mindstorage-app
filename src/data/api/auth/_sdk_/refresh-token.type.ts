@@ -1,19 +1,13 @@
 import type { IUser } from "@/data/models/user";
 
-export type RegisterRequest = {
+
+export type RefreshTokenRequest = {
   body: {
-    email: string;
-    username: string;
-    password: string;
-    session: string;
-    code: string;
-    fullName: string;
-    hobbies: string;
-    intendedUse: string;
+    refreshToken: string;
   };
 };
 
-export type RegisterResponse = {
+export type RefreshTokenResponse = {
   201: {
     refreshTokenExpiresIn: number;
     accessToken: string;
@@ -22,7 +16,7 @@ export type RegisterResponse = {
   };
 };
 
-export type RegisterError = {
+export type RefreshTokenError = {
   [key: number]: {
     message: string;
     status: number;

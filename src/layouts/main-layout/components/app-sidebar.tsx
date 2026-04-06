@@ -12,30 +12,31 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { workspaceSpaces } from "@/data/workspace";
+import { useMySpaces } from "@/data/api/space";
 import { CommandIcon, FolderKanbanIcon, HouseIcon } from "lucide-react";
-
-const navigationItems = [
-  {
-    title: "Trang chủ",
-    url: "/",
-    icon: <HouseIcon />,
-  },
-  {
-    title: "Spaces",
-    url: "/spaces",
-    icon: <FolderKanbanIcon />,
-    items: workspaceSpaces.map((space) => ({
-      title: space.name,
-      url: `/spaces/${space.id}`,
-      image: space.image,
-    })),
-  },
-];
-
-
+import { IMySpaceDto } from "@/data/api/space/_dto_/my-space.dto";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { data: spaces } = useMySpaces();
+
+  const navigationItems = [
+    {
+      title: "Trang chủ",
+      url: "/",
+      icon: <HouseIcon />,
+    },
+    {
+      title: "Không gian",
+      url: "/spaces",
+      icon: <FolderKanbanIcon />,
+      items: (spaces ?? []).map((space: IMySpaceDto) => ({
+        title: space?.name ?? "Không tên",
+        url: `/spaces/${space?.id ?? ""}`,
+       
+      })),
+    },
+  ];
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>

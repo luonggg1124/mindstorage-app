@@ -1,4 +1,6 @@
+import * as React from "react"
 import { Link, useLocation } from "react-router"
+import { ChevronDownIcon } from "lucide-react"
 
 import {
   SidebarGroup,
@@ -36,6 +38,7 @@ export function NavMain({
   items: NavItem[]
 }) {
   const location = useLocation()
+  const [open, setOpen] = React.useState<Record<string, boolean>>({})
 
   return (
     <SidebarGroup>
@@ -49,16 +52,35 @@ export function NavMain({
                   location.pathname.startsWith("/group/")
                 : isPathActive(location.pathname, item.url)
 
+            const hasSub = !!item.items?.length
+            const isOpen = open[item.url] ?? false
+
             return (
               <SidebarMenuItem key={`${item.title}-${item.url}`}>
-                <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
-                  <Link to={item.url}>
-                    {item.icon}
-                    <span>{item.title}</span>
-                  </Link>
-                </SidebarMenuButton>
+                <div className="flex items-center gap-1">
+                  <SidebarMenuButton asChild isActive={isActive} tooltip={item.title} className="flex-1">
+                    <Link to={item.url}>
+                      {item.icon}
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                  {hasSub ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setOpen((s: Record<string, boolean>) => ({ ...s, [item.url]: !(s[item.url] ?? false) }))
+                      }}
+                      className="mr-1 inline-flex size-8 items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors hover:bg-white/10 hover:text-sidebar-foreground"
+                      aria-label={isOpen ? "Đóng" : "Mở"}
+                    >
+                      <ChevronDownIcon className={`size-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                    </button>
+                  ) : null}
+                </div>
 
-                {item.items?.length ? (
+                {item.items?.length && isOpen ? (
                   <SidebarMenuSub>
                     {item.items.map((subItem) => (
                       <SidebarMenuSubItem key={`${subItem.title}-${subItem.url}`}>
