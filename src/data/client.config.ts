@@ -21,31 +21,38 @@ function authRequestSkipsBearer(url: string): boolean {
 }
 
 
+// Không persist refresh token, nhưng trong 1 session vẫn refresh để giảm 401.
 async function refreshToken() {
   try {
-    const refreshTokenValue = useAuthStore.getState().refreshToken;
+    const st = useAuthStore.getState();
+    const refreshTokenValue = st.refreshToken;
     if (!refreshTokenValue) {
-      return;
+      return null;
     }
+
     const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/refresh-token`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken: refreshTokenValue }),
     });
+
     if (!response.ok) {
       return null;
     }
+
     const data = (await response.json()) as any;
-    if (data?.user && data?.accessToken && data?.refreshToken) {
-      const st = useAuthStore.getState();
+    if (data?.accessToken) {
+      // race-safe: nếu refreshToken đã đổi giữa chừng, đừng ghi đè
+      if (useAuthStore.getState().refreshToken !== refreshTokenValue) {
+        return data;
+      }
       st.setAccessToken(data.accessToken);
-      st.setRefreshToken(data.refreshToken);
-      st.setUser(data.user);
+      if (data?.refreshToken) st.setRefreshToken(data.refreshToken);
+      if (data?.user) st.setUser(data.user);
       return data;
     }
     return null;
   } catch {
-    useAuthStore.getState().clear();
     return null;
   }
 }
@@ -87,10 +94,11 @@ client.interceptors.response.use(async (response, request: any) => {
   }
 
   const data = await refreshPromise;
-
   if (!data) {
+    useAuthStore.getState().clear();
     return response;
   }
+
   const retried = await client.request({
     ...request.options,
     headers: {

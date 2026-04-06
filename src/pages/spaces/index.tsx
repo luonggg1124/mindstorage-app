@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { Link } from "react-router";
 
 import {
@@ -9,102 +9,128 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { type WorkspaceSpace, workspaceSpaces } from "@/data/workspace";
+import { useMySpaces } from "@/data/api/space";
+import clientPaths from "@/paths/client";
+
+function formatDateTime(value?: string) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short" }).format(d);
+}
 
 const SpacesPage = () => {
-  const [spaces, setSpaces] = useState<WorkspaceSpace[]>(workspaceSpaces);
+  const mySpaces = useMySpaces();
+  const spaces = useMemo(() => mySpaces.data ?? [], [mySpaces.data]);
   const [isCreateSpaceOpen, setIsCreateSpaceOpen] = useState(false);
   const [newSpace, setNewSpace] = useState({
     name: "",
     description: "",
-    image: "",
   });
 
   const handleCreateSpace = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const name = newSpace.name.trim();
-    const description = newSpace.description.trim();
-    const image = newSpace.image.trim();
+    void newSpace.description.trim();
 
     if (!name) {
       return;
     }
 
-    const createdSpace: WorkspaceSpace = {
-      id: `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now().toString().slice(-4)}`,
-      name,
-      description: description || "Space mới vừa được tạo từ trang quản lý workspace.",
-      image: image || "/spaces/default-space.svg",
-      groups: [],
-    };
-
-    setSpaces((currentSpaces) => [createdSpace, ...currentSpaces]);
-    setNewSpace({ name: "", description: "", image: "" });
+    // Trang này chỉ hiển thị dữ liệu từ API (useMySpaces).
+    // Tạo space cần endpoint riêng; hiện tại chỉ đóng modal.
+    setNewSpace({ name: "", description: "" });
     setIsCreateSpaceOpen(false);
   };
 
   return (
     <>
       <section className="space-y-6">
-        <div className="flex flex-col gap-4 rounded-2xl border bg-card p-6 shadow-sm lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm backdrop-blur lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Workspace</p>
-            <h1 className="text-3xl font-bold tracking-tight">Spaces</h1>
-            <p className="text-muted-foreground">
-              Danh sách các space làm việc. Chọn một space để xem các group bên trong.
-            </p>
+            <p className="text-sm text-slate-300/80">Workspace</p>
+            <h1 className="text-3xl font-bold tracking-tight">Không gian</h1>
+            <p className="text-slate-300/80">Danh sách không gian làm việc của bạn.</p>
+
+            <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-300/80">
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                Tổng: <span className="font-medium text-slate-100">{spaces.length}</span>
+              </span>
+              {mySpaces.fetching ? (
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Đang đồng bộ…</span>
+              ) : null}
+            </div>
           </div>
 
           <button
             type="button"
             onClick={() => setIsCreateSpaceOpen(true)}
-            className="inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+            className="inline-flex rounded-full bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-400"
           >
             Thêm space
           </button>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {spaces.map((space) => {
-            const totalNotes = space.groups.reduce((total, group) => total + group.notes.length, 0);
-
-            return (
+        {mySpaces.loading ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur"
+              >
+                <div className="h-5 w-1/2 animate-pulse rounded bg-white/10" />
+                <div className="mt-3 h-4 w-full animate-pulse rounded bg-white/10" />
+                <div className="mt-2 h-4 w-4/5 animate-pulse rounded bg-white/10" />
+                <div className="mt-4 flex gap-2">
+                  <div className="h-6 w-28 animate-pulse rounded-full bg-white/10" />
+                  <div className="h-6 w-32 animate-pulse rounded-full bg-white/10" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : mySpaces.error ? (
+          <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-6 text-sm text-amber-200">
+            {(mySpaces.error as Error).message || "Lỗi khi tải danh sách không gian."}
+          </div>
+        ) : spaces.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {spaces.map((space) => (
               <Link
                 key={space.id}
-                to={`/spaces/${space.id}`}
-                className="overflow-hidden rounded-xl border bg-card shadow-sm transition hover:border-primary hover:shadow-md"
+                to={clientPaths.space.detail.getPath(space.id.toString())}
+                className="group rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur transition hover:border-indigo-400/50 hover:bg-white/7"
               >
-                <img src={space.image} alt={space.name} className="h-40 w-full object-cover" />
-
-                <div className="p-5">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <h2 className="text-lg font-semibold">{space.name}</h2>
-                    <span className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-                      {space.groups.length} group
-                    </span>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2 className="truncate text-lg font-semibold text-slate-100 group-hover:text-white">
+                      {space.name}
+                    </h2>
+                    <p className="mt-2 line-clamp-2 text-sm text-slate-300/80">
+                      {space.description || "—"}
+                    </p>
                   </div>
+                  <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300/80">
+                    #{space.id}
+                  </span>
+                </div>
 
-                  <p className="mb-3 text-sm text-muted-foreground">{space.description}</p>
-
-                  <div className="mb-3 flex gap-3 text-xs text-muted-foreground">
-                    <span>{space.groups.length} nhóm</span>
-                    <span>•</span>
-                    <span>{totalNotes} note</span>
-                  </div>
-
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    {space.groups.length > 0 ? (
-                      space.groups.slice(0, 3).map((group) => <li key={group.id}>• {group.name}</li>)
-                    ) : (
-                      <li>• Chưa có group nào</li>
-                    )}
-                  </ul>
+                <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-300/80">
+                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                    Tạo: <span className="text-slate-100">{formatDateTime(space.createdAt)}</span>
+                  </span>
+                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                    Cập nhật: <span className="text-slate-100">{formatDateTime(space.updatedAt)}</span>
+                  </span>
                 </div>
               </Link>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-white/15 bg-white/5 p-8 text-sm text-slate-300/80 backdrop-blur">
+            Chưa có không gian nào.
+          </div>
+        )}
       </section>
 
       <Dialog open={isCreateSpaceOpen} onOpenChange={setIsCreateSpaceOpen}>
@@ -140,16 +166,6 @@ const SpacesPage = () => {
               />
             </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium">Image URL</label>
-              <input
-                value={newSpace.image}
-                onChange={(event) => setNewSpace((current) => ({ ...current, image: event.target.value }))}
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                placeholder="/spaces/default-space.svg hoặc URL ảnh"
-              />
-            </div>
-
             <DialogFooter>
               <button
                 type="button"
@@ -162,7 +178,7 @@ const SpacesPage = () => {
                 type="submit"
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
               >
-                Tạo space
+                Đóng
               </button>
             </DialogFooter>
           </form>

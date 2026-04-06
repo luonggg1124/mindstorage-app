@@ -10,20 +10,20 @@ import clientPaths from "@/paths/client";
 import { LoadingPage } from "@/components/page/loading-page";
 
 const MainLayout = () => {
-  const { user, hasHydrated, authBootstrapDone } = useAuth();
+  const { user, hasHydrated } = useAuth();
   const navigate = useNavigate();
  
   
-  console.log(user, hasHydrated, authBootstrapDone);
+  console.log(user, hasHydrated);
   
   useEffect(() => {
-    if (!hasHydrated || !authBootstrapDone) return;
+    if (!hasHydrated) return;
     if (!user) {
       navigate(clientPaths.auth.login.getPath(), { replace: true });
     }
-  }, [hasHydrated, authBootstrapDone, user, navigate]);
+  }, [hasHydrated, user, navigate]);
 
-  if (!hasHydrated || !authBootstrapDone) {
+  if (!hasHydrated) {
     return <LoadingPage />;
   }
 

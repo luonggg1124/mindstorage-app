@@ -9,7 +9,7 @@ export const spaceKeys = {
 
 export const useMySpaces = () => {
   const queryClient = useQueryClient();
-  const { accessToken, hasHydrated, authBootstrapDone } = useAuth();
+  const { accessToken, hasHydrated } = useAuth();
 
   const query = useQuery({
     queryKey: spaceKeys.mySpaces(),
@@ -20,7 +20,7 @@ export const useMySpaces = () => {
       }
       return data;
     },
-    enabled: hasHydrated && authBootstrapDone && !!accessToken,
+    enabled: hasHydrated && !!accessToken,
   });
 
   return {

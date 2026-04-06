@@ -5,15 +5,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AuthSDK } from "../_sdk_";
 import { useAuthStore } from "./store";
 
-export { initAuth, bootstrapAuthAfterPersist } from "./init-auth";
-
 export const useAuth = () => {
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const accessToken = useAuthStore((s) => s.accessToken);
   const refreshToken = useAuthStore((s) => s.refreshToken);
   const hasHydrated = useAuthStore((s) => s.hasHydrated);
-  const authBootstrapDone = useAuthStore((s) => s.authBootstrapDone);
   const setAccessToken = useAuthStore((s) => s.setAccessToken);
   const setRefreshToken = useAuthStore((s) => s.setRefreshToken);
   const setUser = useAuthStore((s) => s.setUser);
@@ -161,7 +158,6 @@ export const useAuth = () => {
     accessToken,
     refreshToken,
     hasHydrated,
-    authBootstrapDone,
     verifyEmail,
     verifyEmailState,
     register,

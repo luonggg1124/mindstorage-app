@@ -2,10 +2,12 @@ import { Link, useParams } from "react-router";
 
 import { findSpaceById } from "@/data/workspace";
 import clientPaths from "@/paths/client";
+import { useGroupBySpace } from "@/data/api/group";
 
 const SpaceDetailPage = () => {
   const { id } = useParams();
   const space = findSpaceById(id);
+  const groupsQuery = useGroupBySpace(id);
 
   if (!space) {
     return (
@@ -22,7 +24,7 @@ const SpaceDetailPage = () => {
     );
   }
 
-  const totalNotes = space.groups.reduce((total, group) => total + group.notes.length, 0);
+  const groups = groupsQuery.data ?? [];
 
   return (
     <section className="space-y-6">
@@ -41,11 +43,7 @@ const SpaceDetailPage = () => {
             <div className="flex flex-wrap items-center gap-3">
               <div className="rounded-xl bg-muted px-4 py-3">
                 <p className="text-xs text-muted-foreground">Tổng group</p>
-                <p className="text-2xl font-semibold">{space.groups.length}</p>
-              </div>
-              <div className="rounded-xl bg-muted px-4 py-3">
-                <p className="text-xs text-muted-foreground">Tổng note</p>
-                <p className="text-2xl font-semibold">{totalNotes}</p>
+                <p className="text-2xl font-semibold">{groups.length}</p>
               </div>
               <Link
                 to={clientPaths.space.list.getPath()}
@@ -58,32 +56,24 @@ const SpaceDetailPage = () => {
         </div>
       </div>
 
-      {space.groups.length > 0 ? (
+      {groups.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {space.groups.map((group) => (
+          {groups.map((group) => (
             <Link
               key={group.id}
-              to={
-                group.notes[0]
-                  ? clientPaths.group.detail.getPath(group.id, { note: group.notes[0].id })
-                  : clientPaths.group.detail.getPath(group.id)
-              }
+              to={clientPaths.group.detail.getPath(String(group.id))}
               className="rounded-xl border bg-card p-5 shadow-sm transition hover:border-primary hover:shadow-md"
             >
               <div className="mb-3 flex items-center justify-between gap-3">
                 <h2 className="text-lg font-semibold">{group.name}</h2>
-                <span className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-                  {group.notes.length} note
-                </span>
               </div>
 
               <p className="mb-3 text-sm text-muted-foreground">{group.description}</p>
 
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {group.notes.slice(0, 3).map((note) => (
-                  <li key={note.id}>• {note.title}</li>
-                ))}
-              </ul>
+              <p className="text-xs text-muted-foreground">
+                Cập nhật:{" "}
+                {group.updatedAt ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium" }).format(new Date(group.updatedAt)) : "—"}
+              </p>
             </Link>
           ))}
         </div>
