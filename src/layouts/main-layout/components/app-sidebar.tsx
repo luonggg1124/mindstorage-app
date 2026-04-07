@@ -12,13 +12,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useMySpaces } from "@/data/api/space";
 import { CommandIcon, FolderKanbanIcon, HouseIcon } from "lucide-react";
-import { IMySpaceDto } from "@/data/api/space/_dto_/my-space.dto";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { data: spaces } = useMySpaces();
-
   const navigationItems = [
     {
       title: "Trang chủ",
@@ -29,11 +25,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Không gian",
       url: "/spaces",
       icon: <FolderKanbanIcon />,
-      items: (spaces ?? []).map((space: IMySpaceDto) => ({
-        title: space?.name ?? "Không tên",
-        url: `/spaces/${space?.id ?? ""}`,
-       
-      })),
     },
   ];
 

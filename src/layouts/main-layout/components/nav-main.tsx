@@ -58,7 +58,12 @@ export function NavMain({
             return (
               <SidebarMenuItem key={`${item.title}-${item.url}`}>
                 <div className="flex items-center gap-1">
-                  <SidebarMenuButton asChild isActive={isActive} tooltip={item.title} className="flex-1">
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive}
+                    tooltip={item.title}
+                    className="flex-1 cursor-pointer transition-colors hover:bg-white/10"
+                  >
                     <Link to={item.url}>
                       {item.icon}
                       <span>{item.title}</span>
@@ -72,7 +77,7 @@ export function NavMain({
                         e.stopPropagation()
                         setOpen((s: Record<string, boolean>) => ({ ...s, [item.url]: !(s[item.url] ?? false) }))
                       }}
-                      className="mr-1 inline-flex size-8 items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors hover:bg-white/10 hover:text-sidebar-foreground"
+                      className="mr-1 inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors hover:bg-white/10 hover:text-sidebar-foreground"
                       aria-label={isOpen ? "Đóng" : "Mở"}
                     >
                       <ChevronDownIcon className={`size-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
@@ -87,6 +92,7 @@ export function NavMain({
                         <SidebarMenuSubButton
                           asChild
                           isActive={isPathActive(location.pathname, subItem.url)}
+                          className="cursor-pointer transition-colors hover:bg-white/10"
                         >
                           <Link to={subItem.url}>
                             {subItem.image ? (
