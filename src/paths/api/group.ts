@@ -10,6 +10,11 @@ const groupPaths = {
     getPath: (id: string | number, queries?: Record<string, string | number | boolean>) =>
       `/api/group/${id}${buildQueryString(queries)}`,
   },
+  update: {
+    path: "/api/group/{id}",
+    getPath: (id: string | number, queries?: Record<string, string | number | boolean>) =>
+      `/api/group/${id}${buildQueryString(queries)}`,
+  },
   bySpace: {
     path: "/api/group/by-space/{spaceId}",
     getPath: (id: string | number, queries?: Record<string, string | number | boolean>) =>

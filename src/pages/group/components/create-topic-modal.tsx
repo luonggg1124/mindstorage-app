@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-type CreateTagModalProps = {
+type CreateTopicModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   groupName: string;
@@ -21,7 +21,7 @@ type CreateTagModalProps = {
   errorMessage?: string;
 };
 
-export function CreateTagModal({
+export function CreateTopicModal({
   open,
   onOpenChange,
   groupName,
@@ -30,24 +30,24 @@ export function CreateTagModal({
   onSubmit,
   isPending,
   errorMessage,
-}: CreateTagModalProps) {
+}: CreateTopicModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Tạo thẻ</DialogTitle>
+          <DialogTitle>Tạo chủ đề</DialogTitle>
           <DialogDescription>
-            Thêm một thẻ mới cho group <span className="font-medium text-foreground">{groupName}</span>.
+            Thêm một chủ đề mới cho group <span className="font-medium text-foreground">{groupName}</span>.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium" htmlFor="create-tag-name">
-              Tên thẻ
+            <label className="mb-1 block text-sm font-medium" htmlFor="create-topic-name">
+              Tên chủ đề
             </label>
             <input
-              id="create-tag-name"
+              id="create-topic-name"
               value={name}
               onChange={(e) => onNameChange(e.target.value)}
               disabled={isPending}
@@ -82,7 +82,7 @@ export function CreateTagModal({
                   Đang tạo <LoadingDots />
                 </>
               ) : (
-                "Tạo thẻ"
+                "Tạo chủ đề"
               )}
             </button>
           </DialogFooter>
@@ -91,4 +91,3 @@ export function CreateTagModal({
     </Dialog>
   );
 }
-

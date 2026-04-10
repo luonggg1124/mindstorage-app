@@ -2,15 +2,16 @@ import authPaths from "./auth";
 import spacePaths from "./space";
 import userPaths from "./user";
 import groupPaths from "./group";
-import tagPaths from "./tag";
-
+import topicPaths from "./topic";
+import notePaths from "./note";
 
 const apiPaths = {
     auth: authPaths,
     user: userPaths,
     space: spacePaths,
     group: groupPaths,
-    tag: tagPaths,
+    topic: topicPaths,
+    note: notePaths,
 }
 
 export default apiPaths;

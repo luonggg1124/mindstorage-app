@@ -11,16 +11,25 @@ import {
 } from "@/components/ui/dialog";
 import clientPaths from "@/paths/client";
 import { useDetailSpace } from "@/data/api/space";
-import { useCreateGroup, useGroupBySpace } from "@/data/api/group";
+import { useCreateGroup, useGroupsBySpaceInfinite, useUpdateGroup } from "@/data/api/group";
 import { formatRelative } from "@/utils/date";
 import LoadingDots from "@/components/animate/loading-dots";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontalIcon, PencilIcon } from "lucide-react";
+import { EditGroupModal } from "./components/edit-group-modal";
+import ScrollInfinite from "@/components/custom/scroll-infinite";
+import { useDebounce } from "@/hooks/use-debounce";
 
 const SpaceDetailPage = () => {
   const { id } = useParams();
   const spaceDetail = useDetailSpace(id);
-  const groupsQuery = useGroupBySpace(id);
+  const [q, setQ] = useState("");
+  const debouncedQ = useDebounce(q, 500);
+  const groupsInfinite = useGroupsBySpaceInfinite({ params: { spaceId: id }, query: { q: debouncedQ, page: 1, size: 12 } });
   const createGroup = useCreateGroup();
+  const updateGroup = useUpdateGroup();
   const [isAddGroupOpen, setIsAddGroupOpen] = useState(false);
+  const [editGroup, setEditGroup] = useState<null | { id: number; name: string; description: string }>(null);
   const [newGroup, setNewGroup] = useState({ name: "", description: "" });
 
   if (!id?.trim()) {
@@ -75,7 +84,7 @@ const SpaceDetailPage = () => {
   }
 
   const space = spaceDetail.data;
-  const groups = groupsQuery.data ?? [];
+  const groups = groupsInfinite.data ?? [];
 
   const handleAddGroup = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -92,7 +101,13 @@ const SpaceDetailPage = () => {
     setNewGroup({ name: "", description: "" });
     setIsAddGroupOpen(false);
   };
-
+  const handleUpdateGroup = async ({ name, description }: { name: string; description: string }) => {
+    if (!editGroup) return;
+    const res = await updateGroup.mutateAsync({ id: editGroup.id, name, description });
+    if (res.error) return;
+    setEditGroup(null);
+    groupsInfinite.invalidate();
+  }
   return (
     <section className="space-y-6">
       <div className="rounded-xl border border-white/10 bg-white/5 p-4 shadow-sm backdrop-blur sm:p-5">
@@ -122,27 +137,107 @@ const SpaceDetailPage = () => {
         </div>
       </div>
 
-      {groups.length > 0 ? (
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          className="h-10 w-full max-w-md rounded-full border bg-background px-4 text-sm outline-none placeholder:text-foreground/60 focus:border-primary"
+          placeholder="Tìm nhóm (tên/mô tả)..."
+          aria-label="Tìm nhóm"
+        />
+        <span className="text-sm text-slate-300/80">
+          Đang xem <span className="font-medium text-slate-100">{groups.length}</span> /{" "}
+          <span className="font-medium text-slate-100">{groupsInfinite.total || groups.length}</span>
+        </span>
+      </div>
+
+      {groupsInfinite.loading ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {groups.map((group) => (
-            <Link
-              key={group.id}
-              to={clientPaths.group.detail.getPath(String(group.id))}
-              className="rounded-xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur transition hover:border-indigo-400/40 hover:bg-white/[0.07]"
-            >
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-slate-100">{group.name}</h2>
-              </div>
-
-              <p className="mb-3 text-sm text-slate-300/85">{group.description}</p>
-
-              <p className="text-xs text-slate-400">
-                Cập nhật:{" "}
-                {formatRelative(group.updatedAt, "—")}
-              </p>
-            </Link>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur">
+              <div className="h-5 w-1/2 animate-pulse rounded bg-white/10" />
+              <div className="mt-3 h-4 w-full animate-pulse rounded bg-white/10" />
+              <div className="mt-2 h-4 w-4/5 animate-pulse rounded bg-white/10" />
+            </div>
           ))}
         </div>
+      ) : groupsInfinite.error ? (
+        <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-6 text-sm text-red-200">
+          {(groupsInfinite.error as Error)?.message || "Lỗi khi tải danh sách nhóm."}
+        </div>
+      ) : groups.length > 0 ? (
+        <ScrollInfinite
+          enabled
+          hasNextPage={Boolean(groupsInfinite.hasNextPage)}
+          isFetchingNextPage={groupsInfinite.fetchingNextPage}
+          onLoadMore={() => groupsInfinite.fetchNextPage()}
+          className="mt-2"
+          
+        >
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {groups.map((group) => {
+              const topicCount = Number.isFinite(group.topicCount) ? group.topicCount : 0;
+              return (
+                <div
+                  key={group.id}
+                  className="rounded-xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur transition hover:border-indigo-400/40 hover:bg-white/[0.07]"
+                >
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <Link to={clientPaths.group.detail.getPath(String(group.id))} className="min-w-0 flex-1">
+                      <h2 className="truncate text-lg font-semibold text-slate-100">{group.name}</h2>
+                    </Link>
+
+                    <div className="flex shrink-0 items-start gap-2">
+                      <span
+                        className="shrink-0 rounded-full h-7 border border-indigo-400/30 bg-indigo-500/15 px-3 py-1 text-xs font-medium text-indigo-200 tabular-nums"
+                        title="Số chủ đề trong nhóm"
+                      >
+                        {topicCount} chủ đề
+                      </span>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            className="inline-flex size-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
+                            aria-label="Mở menu"
+                          >
+                            <MoreHorizontalIcon className="size-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-36">
+                          <DropdownMenuItem
+                            onClick={() =>
+                              setEditGroup({
+                                id: group.id,
+                                name: group.name,
+                                description: group.description ?? "",
+                              })
+                            }
+                          >
+                            <PencilIcon className="size-4" />
+                            <span>Sửa</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+
+                  <p className="mb-3 text-sm text-slate-300/85">{group.description}</p>
+
+                  <p className="text-xs text-slate-400">
+                    Cập nhật:{" "}
+                    {formatRelative(group.updatedAt, "—")}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          {groupsInfinite.fetchingNextPage ? (
+            <div className="mt-4 text-center text-sm text-slate-300/80">Đang tải thêm…</div>
+          ) : null}
+        </ScrollInfinite>
       ) : (
         <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-8 text-sm text-slate-300/80 backdrop-blur">
           Không gian này chưa có nhóm nào.
@@ -205,12 +300,23 @@ const SpaceDetailPage = () => {
                 disabled={createGroup.isPending}
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
               >
-                {createGroup.isPending ? <>Đang tạo <LoadingDots/></> : "Tạo nhóm"}
+                {createGroup.isPending ? <>Đang tạo <LoadingDots /></> : "Tạo nhóm"}
               </button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
+
+      <EditGroupModal
+        open={Boolean(editGroup)}
+        onOpenChange={(open) => {
+          if (!open) setEditGroup(null);
+        }}
+        initialValue={{ name: editGroup?.name ?? "", description: editGroup?.description ?? "" }}
+        isPending={updateGroup.isPending}
+        errorMessage={updateGroup.error?.message || undefined}
+        onSubmit={handleUpdateGroup}
+      />
     </section>
   );
 };

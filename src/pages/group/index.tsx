@@ -4,30 +4,41 @@ import { Link, useParams } from "react-router";
 import clientPaths from "@/paths/client";
 import { useDetailGroup } from "@/data/api/group";
 import { formatRelative } from "@/utils/date";
-import { useCreateTag, useTagsByGroup } from "@/data/api/tag";
-import { CreateTagModal } from "./components/create-tag-modal";
-import { TagTabs } from "./components/tag-tabs";
-import { TagNotes } from "./components/tag-notes";
+import { useCreateTopic, useTopicsByGroup } from "@/data/api/topic";
+import { CreateTopicModal } from "./components/create-topic-modal";
+import { TopicTabs } from "./components/topic-tabs";
+import { TopicNotes } from "./components/topic-notes";
+import { EditTopicModal } from "./components/edit-topic-modal";
 
 const GroupPage = () => {
   const { id } = useParams();
   const groupDetail = useDetailGroup(id);
-  const tagsQuery = useTagsByGroup(id);
-  const createTag = useCreateTag();
-  const [isCreateTagOpen, setIsCreateTagOpen] = useState(false);
-  const [newTagName, setNewTagName] = useState("");
-  const [activeTagId, setActiveTagId] = useState<number | null>(null);
-  const tags = useMemo(() => tagsQuery.data ?? [], [tagsQuery.data]);
+  const topicsQuery = useTopicsByGroup(id);
+  const createTopic = useCreateTopic();
+  const [isCreateTopicOpen, setIsCreateTopicOpen] = useState(false);
+  const [newTopicName, setNewTopicName] = useState("");
+  const [activeTopicId, setActiveTopicId] = useState<number | null>(null);
+  const [editTopic, setEditTopic] = useState<null | { id: number; name: string }>(null);
+  const [editDraft, setEditDraft] = useState<{ name: string }>({ name: "" });
+  const [topicNameOverrides, setTopicNameOverrides] = useState<Record<number, string>>({});
+  const [deletedTopicIds, setDeletedTopicIds] = useState<Record<number, true>>({});
 
-  // keep activeTagId stable with current tag list
+  const topics = useMemo(() => {
+    const raw = topicsQuery.data ?? [];
+    return raw
+      .filter((t) => !deletedTopicIds[t.id])
+      .map((t) => ({ ...t, name: topicNameOverrides[t.id] ?? t.name }));
+  }, [topicsQuery.data, topicNameOverrides, deletedTopicIds]);
+
+  // keep activeTopicId stable with current topic list
   useEffect(() => {
-    if (tags.length === 0) {
-      if (activeTagId !== null) setActiveTagId(null);
+    if (topics.length === 0) {
+      if (activeTopicId !== null) setActiveTopicId(null);
       return;
     }
-    if (activeTagId != null && tags.some((t) => t.id === activeTagId)) return;
-    setActiveTagId(tags[0]?.id ?? null);
-  }, [tags, activeTagId]);
+    if (activeTopicId != null && topics.some((t) => t.id === activeTopicId)) return;
+    setActiveTopicId(topics[0]?.id ?? null);
+  }, [topics, activeTopicId]);
 
   if (!id?.trim()) {
     return (
@@ -76,16 +87,23 @@ const GroupPage = () => {
 
   const group = groupDetail.data;
 
-  const handleCreateTag = async (event: FormEvent<HTMLFormElement>) => {
+  const handleCreateTopic = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const name = newTagName.trim();
+    const name = newTopicName.trim();
     if (!name) return;
     const groupId = Number(id);
     if (!Number.isFinite(groupId)) return;
-    const res = await createTag.mutateAsync({ name, groupId });
+    const res = await createTopic.mutateAsync({ name, groupId });
     if (res.error) return;
-    setNewTagName("");
-    setIsCreateTagOpen(false);
+    setNewTopicName("");
+    setIsCreateTopicOpen(false);
+  };
+
+  const handleDeleteTopic = (topic: { id: number }) => {
+    setDeletedTopicIds((prev) => ({ ...prev, [topic.id]: true }));
+    if (activeTopicId === topic.id) {
+      setActiveTopicId(topics.filter((t) => t.id !== topic.id)[0]?.id ?? null);
+    }
   };
 
   return (
@@ -106,10 +124,10 @@ const GroupPage = () => {
           <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
             <button
               type="button"
-              onClick={() => setIsCreateTagOpen(true)}
+              onClick={() => setIsCreateTopicOpen(true)}
               className="inline-flex rounded-full bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-400"
             >
-              Tạo thẻ
+              Tạo chủ đề
             </button>
             <Link
               to={clientPaths.space.list.getPath()}
@@ -121,25 +139,46 @@ const GroupPage = () => {
         </div>
       </div>
 
-      <TagTabs
-        loading={tagsQuery.loading}
-        errorMessage={(tagsQuery.error as Error | undefined)?.message}
-        tags={tags}
-        activeTagId={activeTagId}
-        onSelectTag={setActiveTagId}
+      <TopicTabs
+        loading={topicsQuery.loading}
+        errorMessage={topicsQuery?.error?.message || undefined}
+        topics={topics}
+        activeTopicId={activeTopicId}
+        onSelectTopic={setActiveTopicId}
+        onEditTopic={(topic) => {
+          setEditTopic({ id: topic.id, name: topic.name });
+          setEditDraft({ name: topic.name });
+        }}
+        onDeleteTopic={handleDeleteTopic}
       />
 
-      <TagNotes activeTagId={activeTagId} activeTagName={tags.find((t) => t.id === activeTagId)?.name} />
+      <TopicNotes activeTopicId={activeTopicId} activeTopicName={topics.find((t) => t.id === activeTopicId)?.name} />
 
-      <CreateTagModal
-        open={isCreateTagOpen}
-        onOpenChange={setIsCreateTagOpen}
+      <CreateTopicModal
+        open={isCreateTopicOpen}
+        onOpenChange={setIsCreateTopicOpen}
         groupName={group.name}
-        name={newTagName}
-        onNameChange={setNewTagName}
-        onSubmit={handleCreateTag}
-        isPending={createTag.isPending}
-        errorMessage={createTag?.error?.message || undefined}
+        name={newTopicName}
+        onNameChange={setNewTopicName}
+        onSubmit={handleCreateTopic}
+        isPending={createTopic.isPending}
+        errorMessage={createTopic?.error?.message || undefined}
+      />
+
+      <EditTopicModal
+        open={Boolean(editTopic)}
+        onOpenChange={(open) => {
+          if (!open) setEditTopic(null);
+        }}
+        value={editDraft}
+        onChange={setEditDraft}
+        onSubmit={(event) => {
+          event.preventDefault();
+          const name = editDraft.name.trim();
+          if (!name || !editTopic) return;
+          setTopicNameOverrides((prev) => ({ ...prev, [editTopic.id]: name }));
+          setEditTopic(null);
+        }}
       />
     </section>
   );

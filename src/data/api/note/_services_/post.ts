@@ -1,17 +1,18 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { TagSDK } from "../_sdk_";
-import { tagKeys } from "./get";
 
-export const useCreateTag = () => {
+import { NoteSDK } from "../_sdk_";
+import { noteKeys } from "./get";
+
+export const useCreateNote = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (body: { name: string; groupId: number }) => {
-      const response = await TagSDK.create({ body });
+    mutationFn: async (body: { title: string; content?: string; topicId: number; parentId?: number | null }) => {
+      const response = await NoteSDK.create({ body });
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: tagKeys.all });
+      queryClient.invalidateQueries({ queryKey: noteKeys.all });
     },
   });
 

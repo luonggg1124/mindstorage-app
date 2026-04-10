@@ -2,7 +2,7 @@ import { createBrowserRouter } from "react-router";
 import MainLayout from "../layouts/main-layout";
 import AuthLayout from "../layouts/auth-layout";
 import Home from "../pages/home";
-import SpacesPage from "../pages/spaces";
+import SpacesPage from "../pages/spaces/list";
 import SpaceDetailPage from "../pages/spaces/detail";
 import GroupPage from "../pages/group";
 import ProfilePage from "../pages/profile";

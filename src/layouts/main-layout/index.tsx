@@ -14,7 +14,6 @@ const MainLayout = () => {
   const navigate = useNavigate();
  
   
-  console.log(user, hasHydrated);
   
   useEffect(() => {
     if (!hasHydrated) return;

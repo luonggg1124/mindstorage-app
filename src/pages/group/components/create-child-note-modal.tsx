@@ -1,4 +1,4 @@
-import { FormEvent } from "react";
+import { FormEvent, useMemo, useState } from "react";
 
 import {
   Dialog,
@@ -33,6 +33,21 @@ export function CreateChildNoteModal({
   onChange,
   onSubmit,
 }: CreateChildNoteModalProps) {
+  const [search, setSearch] = useState("");
+
+  const filteredNotes = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return notes;
+    return notes.filter((n) => n.title.toLowerCase().includes(q));
+  }, [notes, search]);
+
+  const notesForSelect = useMemo(() => {
+    const selected = notes.find((n) => n.id === value.parentId) ?? null;
+    if (!selected) return filteredNotes;
+    if (filteredNotes.some((n) => n.id === selected.id)) return filteredNotes;
+    return [selected, ...filteredNotes];
+  }, [filteredNotes, notes, value.parentId]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
@@ -49,11 +64,17 @@ export function CreateChildNoteModal({
               onChange={(event) => onChange({ ...value, parentId: event.target.value })}
               className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             >
-              {notes.map((note) => (
-                <option key={note.id} value={note.id}>
-                  {note.title}
+              {notesForSelect.length > 0 ? (
+                notesForSelect.map((note) => (
+                  <option key={note.id} value={note.id}>
+                    {note.title}
+                  </option>
+                ))
+              ) : (
+                <option value={value.parentId || ""} disabled>
+                  Không tìm thấy note phù hợp
                 </option>
-              ))}
+              )}
             </select>
           </div>
 
@@ -80,6 +101,13 @@ export function CreateChildNoteModal({
           </div>
 
           <DialogFooter>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="mr-auto h-10 w-full rounded-lg border bg-background px-3 text-sm outline-none focus:border-primary sm:w-[240px]"
+              placeholder="Tìm note..."
+              aria-label="Tìm note"
+            />
             <button
               type="button"
               onClick={() => onOpenChange(false)}

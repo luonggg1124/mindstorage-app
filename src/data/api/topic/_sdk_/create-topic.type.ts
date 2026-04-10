@@ -1,13 +1,11 @@
-
-
-export type CreateTagRequest = {
+export type CreateTopicRequest = {
   body: {
     name: string;
     groupId: number;
   };
 };
 
-export type CreateTagResponse = {
+export type CreateTopicResponse = {
   201: {
     id: number;
     name: string;
@@ -17,11 +15,10 @@ export type CreateTagResponse = {
   };
 };
 
-export type CreateTagError = {
+export type CreateTopicError = {
   [key: number]: {
     message: string;
     status: number;
     field?: string;
   };
 };
-
