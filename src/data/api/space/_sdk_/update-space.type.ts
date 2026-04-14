@@ -1,5 +1,3 @@
-import type { ISpaceDetailDto } from "../_dto_";
-
 export type UpdateSpaceRequest = {
   id: string | number;
   body: {
@@ -9,7 +7,13 @@ export type UpdateSpaceRequest = {
 };
 
 export type UpdateSpaceResponse = {
-  201: ISpaceDetailDto;
+  201: {
+    id: number;
+    name: string;
+    description: string;
+    createdAt: string;
+    updatedAt: string;
+  };
 };
 
 export type UpdateSpaceError = {

@@ -9,11 +9,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useCreateSpace, useMySpacesInfinite } from "@/data/api/space";
+import { useCreateSpace, useDeleteSpace, useMySpacesInfinite } from "@/data/api/space";
 import clientPaths from "@/paths/client";
 import LoadingDots from "@/components/animate/loading-dots";
 import { formatRelative } from "@/utils/date";
-import { MoreHorizontalIcon, PencilIcon } from "lucide-react";
+import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { EditSpaceModal } from "./components/edit-space-modal";
 import { useUpdateSpace } from "@/data/api/space";
@@ -23,6 +23,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 const SpacesPage = () => {
   const createSpace = useCreateSpace();
   const updateSpace = useUpdateSpace();
+  const deleteSpace = useDeleteSpace();
   const [q, setQ] = useState("");
   const debouncedQ = useDebounce(q, 500);
   const spacesInfinite = useMySpacesInfinite({ query: { q: debouncedQ, page: 1, size: 12 } });
@@ -33,6 +34,8 @@ const SpacesPage = () => {
   );
   const [isCreateSpaceOpen, setIsCreateSpaceOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<null | { id: number; name: string; description: string }>(null);
+  const [deleteTarget, setDeleteTarget] = useState<null | { id: number; name: string }>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [newSpace, setNewSpace] = useState({
     name: "",
     description: "",
@@ -52,6 +55,15 @@ const SpacesPage = () => {
     if (res.error) return;
     setNewSpace({ name: "", description: "" });
     setIsCreateSpaceOpen(false);
+  };
+
+  const handleConfirmDeleteSpace = async () => {
+    if (!deleteTarget) return;
+    const res = await deleteSpace.mutateAsync({ id: deleteTarget.id });
+    if (res.error) return;
+    setDeleteTarget(null);
+    setDeleteConfirmText("");
+    spacesInfinite.invalidate();
   };
 
   return (
@@ -178,6 +190,16 @@ const SpacesPage = () => {
                                 <PencilIcon className="size-4" />
                                 <span>Sửa</span>
                               </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setDeleteTarget({ id: space.id, name: space.name });
+                                  setDeleteConfirmText("");
+                                }}
+                                className="text-red-300 focus:text-red-200"
+                              >
+                                <Trash2Icon className="size-4" />
+                                <span>Xóa</span>
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -267,6 +289,64 @@ const SpacesPage = () => {
               </button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+            setDeleteConfirmText("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Xóa không gian?</DialogTitle>
+            <DialogDescription>
+              Nhập <span className="font-semibold text-foreground">delete</span> để xác nhận xóa{" "}
+              <span className="font-medium text-foreground">{deleteTarget?.name ?? "—"}</span>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium" htmlFor="confirm-delete-space">
+              Xác nhận
+            </label>
+            <input
+              id="confirm-delete-space"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              placeholder="Nhập delete"
+              autoComplete="off"
+            />
+          </div>
+
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleteSpace.isPending}
+              className="rounded-lg border px-4 py-2 text-sm font-medium transition hover:bg-muted"
+            >
+              Hủy
+            </button>
+            {deleteSpace.error?.message ? (
+              <div className="mr-auto rounded-lg border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
+                {deleteSpace.error.message}
+              </div>
+            ) : null}
+            <button
+              type="button"
+              onClick={handleConfirmDeleteSpace}
+              disabled={deleteSpace.isPending || deleteConfirmText.trim().toLowerCase() !== "delete"}
+              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-60"
+            >
+              {deleteSpace.isPending ? <>Đang xóa <LoadingDots /></> : "Xóa"}
+            </button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

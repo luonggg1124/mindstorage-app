@@ -11,6 +11,11 @@ const topicPaths = {
     path: "/api/topic",
     getPath: (queries?: Record<string, string | number | boolean>) => `/api/topic${buildQueryString(queries)}`,
   },
+  update: {
+    path: "/api/topic/{id}",
+    getPath: (id: string | number, queries?: Record<string, string | number | boolean>) =>
+      `/api/topic/${id}${buildQueryString(queries)}`,
+  },
 };
 
 export default topicPaths;

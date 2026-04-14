@@ -1,25 +1,24 @@
-export type UpdateGroupRequest = {
+export type UpdateNoteRequest = {
   params: {
     id: string | number;
   };
   body: {
-    name: string;
-    description?: string;
-    spaceId: number;
+    title: string;
+    content?: string;
   };
 };
 
-export type UpdateGroupResponse = {
+export type UpdateNoteResponse = {
   201: {
     id: number;
-    name: string;
-    description: string;
+    title: string;
+    content: string;
     createdAt: string;
     updatedAt: string;
   };
 };
 
-export type UpdateGroupError = {
+export type UpdateNoteError = {
   [key: number]: {
     message: string;
     status: number;

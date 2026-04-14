@@ -4,6 +4,7 @@ import type { GroupBySpaceError, GroupBySpaceRequest, GroupBySpaceResponse } fro
 import type { CreateGroupError, CreateGroupRequest, CreateGroupResponse } from "./create-group.type";
 import type { GroupDetailError, GroupDetailRequest, GroupDetailResponse } from "./detail-group.type";
 import type { UpdateGroupError, UpdateGroupRequest, UpdateGroupResponse } from "./update-group.type";
+import type { DeleteGroupError, DeleteGroupRequest, DeleteGroupResponse } from "./delete-group.type";
 
 export class GroupSDK {
   static async bySpace<ThrowOnError extends boolean = false>(request: GroupBySpaceRequest) {
@@ -35,9 +36,18 @@ export class GroupSDK {
     });
     return response;
   }
+
+  static async delete<ThrowOnError extends boolean = false>(request: DeleteGroupRequest) {
+    const response = await client.delete<DeleteGroupResponse, DeleteGroupError, ThrowOnError>({
+      url: apiPaths.group.delete.getPath(request.params.id),
+    });
+    return response;
+  }
 }
 
 export type * from "./by-space.type";
 export type * from "./create-group.type";
 export type * from "./detail-group.type";
+export type * from "./delete-group.type";
+export type * from "./update-group.type";
 

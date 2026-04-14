@@ -6,7 +6,6 @@ export default function Home() {
   const geo = useGeolocation();
   const lat = geo.coords?.lat;
   const lon = geo.coords?.lon;
-  console.log(geo); 
   return (
     <section className="space-y-4 ">
       <div>

@@ -16,6 +16,11 @@ const spacePaths = {
         getPath: (id: string | number, queries?: Record<string, string | number | boolean>) =>
             `/api/space/${id}${buildQueryString(queries)}`,
     },
+    delete: {
+        path: "/api/space/{id}",
+        getPath: (id: string | number, queries?: Record<string, string | number | boolean>) =>
+            `/api/space/${id}${buildQueryString(queries)}`,
+    },
     mySpaces: {
         path: "/api/space/my-spaces",
         getPath: (queries?: Record<string, string | number | boolean>) => `/api/space/my-spaces${buildQueryString(queries)}`

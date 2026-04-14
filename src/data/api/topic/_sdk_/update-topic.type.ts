@@ -1,25 +1,24 @@
-export type UpdateGroupRequest = {
+export type UpdateTopicRequest = {
   params: {
     id: string | number;
   };
   body: {
     name: string;
-    description?: string;
-    spaceId: number;
+    groupId: number;
   };
 };
 
-export type UpdateGroupResponse = {
+export type UpdateTopicResponse = {
   201: {
     id: number;
     name: string;
-    description: string;
+    groupId: number;
     createdAt: string;
     updatedAt: string;
   };
 };
 
-export type UpdateGroupError = {
+export type UpdateTopicError = {
   [key: number]: {
     message: string;
     status: number;

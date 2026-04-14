@@ -4,6 +4,7 @@ import type { MySpacesError, MySpacesRequest, MySpacesResponse } from "./my-spac
 import type { CreateSpaceError, CreateSpaceRequest, CreateSpaceResponse } from "./create-space.type";
 import type { SpaceDetailError, SpaceDetailRequest, SpaceDetailResponse } from "./detail-space.type";
 import type { UpdateSpaceError, UpdateSpaceRequest, UpdateSpaceResponse } from "./update-space.type";
+import type { DeleteSpaceError, DeleteSpaceRequest, DeleteSpaceResponse } from "./delete-space.type";
 
 
 export class SpaceSDK {
@@ -38,5 +39,18 @@ export class SpaceSDK {
         });
         return response;
     }
+
+    static async delete<ThrowOnError extends boolean = false>(request: DeleteSpaceRequest) {
+        const response = await client.delete<DeleteSpaceResponse, DeleteSpaceError, ThrowOnError>({
+            url: apiPaths.space.delete.getPath(request.params.id),
+        });
+        return response;
+    }
  
 }
+
+export type * from "./create-space.type";
+export type * from "./delete-space.type";
+export type * from "./detail-space.type";
+export type * from "./my-spaces.type";
+export type * from "./update-space.type";

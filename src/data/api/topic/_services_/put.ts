@@ -1,18 +1,21 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { NoteSDK } from "../_sdk_";
-import { noteKeys } from "./get";
+import { TopicSDK } from "../_sdk_";
+import { topicKeys } from "./get";
 
-export const useCreateNote = () => {
+export const useUpdateTopic = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (body: { title: string; content?: string; topicId: number; parentId?: number | null }) => {
-      const response = await NoteSDK.create({ body });
+    mutationFn: async (body: { id: string | number; name: string; groupId: number }) => {
+      const response = await TopicSDK.update({
+        params: { id: body.id },
+        body: { name: body.name, groupId: body.groupId },
+      });
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: noteKeys.all });
+      queryClient.invalidateQueries({ queryKey: topicKeys.all });
     },
   });
 
@@ -27,6 +30,4 @@ export const useCreateNote = () => {
     reset: mutation.reset,
   };
 };
-
-
 

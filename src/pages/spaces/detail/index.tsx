@@ -11,11 +11,11 @@ import {
 } from "@/components/ui/dialog";
 import clientPaths from "@/paths/client";
 import { useDetailSpace } from "@/data/api/space";
-import { useCreateGroup, useGroupsBySpaceInfinite, useUpdateGroup } from "@/data/api/group";
+import { useCreateGroup, useDeleteGroup, useGroupsBySpaceInfinite, useUpdateGroup } from "@/data/api/group";
 import { formatRelative } from "@/utils/date";
 import LoadingDots from "@/components/animate/loading-dots";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontalIcon, PencilIcon } from "lucide-react";
+import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react";
 import { EditGroupModal } from "./components/edit-group-modal";
 import ScrollInfinite from "@/components/custom/scroll-infinite";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -28,8 +28,11 @@ const SpaceDetailPage = () => {
   const groupsInfinite = useGroupsBySpaceInfinite({ params: { spaceId: id }, query: { q: debouncedQ, page: 1, size: 12 } });
   const createGroup = useCreateGroup();
   const updateGroup = useUpdateGroup();
+  const deleteGroup = useDeleteGroup();
   const [isAddGroupOpen, setIsAddGroupOpen] = useState(false);
   const [editGroup, setEditGroup] = useState<null | { id: number; name: string; description: string }>(null);
+  const [deleteTarget, setDeleteTarget] = useState<null | { id: number; name: string }>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [newGroup, setNewGroup] = useState({ name: "", description: "" });
 
   if (!id?.trim()) {
@@ -103,11 +106,22 @@ const SpaceDetailPage = () => {
   };
   const handleUpdateGroup = async ({ name, description }: { name: string; description: string }) => {
     if (!editGroup) return;
-    const res = await updateGroup.mutateAsync({ id: editGroup.id, name, description });
+    const spaceId = Number(id);
+    if (!Number.isFinite(spaceId)) return;
+    const res = await updateGroup.mutateAsync({ id: editGroup.id, name, description, spaceId });
     if (res.error) return;
     setEditGroup(null);
     groupsInfinite.invalidate();
   }
+
+  const handleConfirmDeleteGroup = async () => {
+    if (!deleteTarget) return;
+    const res = await deleteGroup.mutateAsync({ id: deleteTarget.id });
+    if (res.error) return;
+    setDeleteTarget(null);
+    setDeleteConfirmText("");
+    groupsInfinite.invalidate();
+  };
   return (
     <section className="space-y-6">
       <div className="rounded-xl border border-white/10 bg-white/5 p-4 shadow-sm backdrop-blur sm:p-5">
@@ -218,6 +232,16 @@ const SpaceDetailPage = () => {
                             <PencilIcon className="size-4" />
                             <span>Sửa</span>
                           </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setDeleteTarget({ id: group.id, name: group.name });
+                              setDeleteConfirmText("");
+                            }}
+                            className="text-red-300 focus:text-red-200"
+                          >
+                            <Trash2Icon className="size-4" />
+                            <span>Xóa</span>
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -304,6 +328,64 @@ const SpaceDetailPage = () => {
               </button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+            setDeleteConfirmText("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Xóa nhóm?</DialogTitle>
+            <DialogDescription>
+              Nhập <span className="font-semibold text-foreground">delete</span> để xác nhận xóa{" "}
+              <span className="font-medium text-foreground">{deleteTarget?.name ?? "—"}</span>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium" htmlFor="confirm-delete-group">
+              Xác nhận
+            </label>
+            <input
+              id="confirm-delete-group"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              placeholder="Nhập delete"
+              autoComplete="off"
+            />
+          </div>
+
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleteGroup.isPending}
+              className="rounded-lg border px-4 py-2 text-sm font-medium transition hover:bg-muted"
+            >
+              Hủy
+            </button>
+            {deleteGroup.error?.message ? (
+              <div className="mr-auto rounded-lg border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
+                {deleteGroup.error.message}
+              </div>
+            ) : null}
+            <button
+              type="button"
+              onClick={handleConfirmDeleteGroup}
+              disabled={deleteGroup.isPending || deleteConfirmText.trim().toLowerCase() !== "delete"}
+              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-60"
+            >
+              {deleteGroup.isPending ? <>Đang xóa <LoadingDots /></> : "Xóa"}
+            </button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

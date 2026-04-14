@@ -15,10 +15,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import ScrollInfinite from "@/components/custom/scroll-infinite";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { INoteByTopicDto } from "@/data/api/note";
-import { useCreateNote, useDeleteNote, useNotesByTopicInfinite } from "@/data/api/note";
+import { useCreateNote, useDeleteNote, useNotesByParentInfinite, useNotesByTopicInfinite, useUpdateNote } from "@/data/api/note";
 import { toast } from "@/lib/toast";
 import { sanitize } from "@/lib/dompurify";
-import LoadingDots from "@/components/animate/loading-dots";
+
+import { ChildNoteDetailModal } from "./child-note-detail-modal";
+import { CreateChildNoteModal } from "./create-child-note-modal";
+import { DeleteNoteConfirmDialog } from "./delete-note-confirm-dialog";
+import { UpdateNoteModal } from "./update-note-modal";
 
 function safeInitials(value: string) {
   const trimmed = (value ?? "").trim();
@@ -31,17 +35,30 @@ type TopicNotesProps = {
   activeTopicName?: string;
 };
 
-export function TopicNotes({ activeTopicId, activeTopicName }: TopicNotesProps) {
+const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [draft, setDraft] = useState({ title: "", summary: "" });
   const createNote = useCreateNote();
+  const updateNote = useUpdateNote();
   const deleteNote = useDeleteNote();
+
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [editDraft, setEditDraft] = useState({ title: "", summary: "" });
+
   const [isAddChildOpen, setIsAddChildOpen] = useState(false);
   const [childDraft, setChildDraft] = useState({ title: "", summary: "" });
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+
+  const [selectedChild, setSelectedChild] = useState<null | {
+    id: number;
+    title: string;
+    content: string;
+    creator: INoteByTopicDto["creator"];
+    updatedAt: string;
+  }>(null);
+
+  const [deleteTarget, setDeleteTarget] = useState<null | { id: number; title: string }>(null);
+
   const [q, setQ] = useState("");
   const debouncedQ = useDebounce(q, 500);
 
@@ -52,6 +69,11 @@ export function TopicNotes({ activeTopicId, activeTopicName }: TopicNotesProps) 
 
   const notes = useMemo<INoteByTopicDto[]>(() => notesInfinite.data ?? [], [notesInfinite.data]);
   const selected = useMemo(() => notes.find((n) => n.id === selectedId) ?? null, [notes, selectedId]);
+
+  const childNotesInfinite = useNotesByParentInfinite({
+    params: { parentId: selected?.id ?? null },
+    query: { page: 1, size: 12 },
+  });
 
   const handleCreate = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -79,25 +101,44 @@ export function TopicNotes({ activeTopicId, activeTopicName }: TopicNotesProps) 
 
   const openNoteDetail = (note: INoteByTopicDto) => {
     setSelectedId(note.id);
-    setIsEditing(false);
+    setIsEditOpen(false);
     setEditDraft({ title: note.title, summary: note.content });
     setIsAddChildOpen(false);
     setChildDraft({ title: "", summary: "" });
+    setSelectedChild(null);
+    setDeleteTarget(null);
   };
 
   const handleSaveEdit = () => {
-    // Fake: không lưu vào list, chỉ thoát edit mode.
-    setIsEditing(false);
+    if (!selected) return;
+    const title = editDraft.title.trim();
+    if (!title) return;
+
+    updateNote
+      .mutateAsync({
+        id: selected.id,
+        title,
+        content: editDraft.summary?.trim() || "",
+      })
+      .then((res) => {
+        if (res.error) return;
+        setIsEditOpen(false);
+        notesInfinite.invalidate();
+      })
+      .catch(() => {
+        toast.error("Lỗi khi cập nhật note");
+      });
   };
 
   const handleDeleteSelected = () => {
-    if (!selected) return;
+    if (!deleteTarget) return;
     deleteNote
-      .mutateAsync({ id: selected.id })
+      .mutateAsync({ id: deleteTarget.id })
       .then((res) => {
         if (res.error) return;
-        setIsDeleteConfirmOpen(false);
+        setDeleteTarget(null);
         setSelectedId(null);
+        setSelectedChild(null);
         notesInfinite.invalidate();
       })
       .catch(() => {
@@ -124,6 +165,7 @@ export function TopicNotes({ activeTopicId, activeTopicName }: TopicNotesProps) 
         setChildDraft({ title: "", summary: "" });
         setIsAddChildOpen(false);
         notesInfinite.invalidate();
+        childNotesInfinite.invalidate();
       })
       .catch(() => {
         toast.error("Lỗi khi tạo ghi chú con");
@@ -190,7 +232,12 @@ export function TopicNotes({ activeTopicId, activeTopicName }: TopicNotesProps) 
             isFetchingNextPage={notesInfinite.fetchingNextPage}
             onLoadMore={() => notesInfinite.fetchNextPage()}
             className="mt-4"
-           
+            endMessage={
+              <div className="mt-6 rounded-xl border border-dashed border-white/15 bg-white/5 p-4 text-center text-sm text-slate-300/80">
+                Bạn đã xem tất cả{" "}
+                <span className="font-medium text-slate-100">{notesInfinite.total || notes.length}</span> note.
+              </div>
+            }
           >
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {notes.map((n) => (
@@ -212,9 +259,7 @@ export function TopicNotes({ activeTopicId, activeTopicName }: TopicNotesProps) 
                         <TooltipTrigger asChild>
                           <div className="inline-flex items-center gap-2">
                             <Avatar size="sm">
-                              {n.creator.avatarUrl ? (
-                                <AvatarImage src={n.creator.avatarUrl} alt={n.creator.username} />
-                              ) : null}
+                              {n.creator.avatarUrl ? <AvatarImage src={n.creator.avatarUrl} alt={n.creator.username} /> : null}
                               <AvatarFallback>{safeInitials(n.creator.username)}</AvatarFallback>
                             </Avatar>
                           </div>
@@ -305,8 +350,8 @@ export function TopicNotes({ activeTopicId, activeTopicName }: TopicNotesProps) 
         onOpenChange={(open) => {
           if (!open) {
             setSelectedId(null);
-            setIsEditing(false);
-            setIsDeleteConfirmOpen(false);
+            setIsEditOpen(false);
+            setDeleteTarget(null);
           }
         }}
       >
@@ -335,7 +380,6 @@ export function TopicNotes({ activeTopicId, activeTopicName }: TopicNotesProps) 
                             ) : null}
                             <AvatarFallback>{safeInitials(selected.creator.username)}</AvatarFallback>
                           </Avatar>
-                        
                         </div>
                       </TooltipTrigger>
                       <TooltipContent sideOffset={6}>@{selected.creator.username}</TooltipContent>
@@ -353,7 +397,7 @@ export function TopicNotes({ activeTopicId, activeTopicName }: TopicNotesProps) 
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsDeleteConfirmOpen(true)}
+                    onClick={() => setDeleteTarget({ id: selected.id, title: selected.title })}
                     className="inline-flex rounded-full border border-red-400/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-500/15 disabled:opacity-60"
                     disabled={deleteNote.isPending}
                   >
@@ -361,154 +405,167 @@ export function TopicNotes({ activeTopicId, activeTopicName }: TopicNotesProps) 
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsEditing((v) => !v)}
+                    onClick={() => {
+                      setEditDraft({ title: selected.title, summary: selected.content });
+                      setIsEditOpen(true);
+                    }}
                     className="inline-flex rounded-full bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-400"
                   >
-                    {isEditing ? "Đóng sửa" : "Sửa"}
+                    Sửa
                   </button>
                 </div>
               </div>
 
-              {isEditing ? (
-                <div className="space-y-4 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                  <div>
-                    <label className="mb-1 block text-sm font-medium" htmlFor="edit-note-title">
-                      Tên note
-                    </label>
-                    <input
-                      id="edit-note-title"
-                      value={editDraft.title}
-                      onChange={(e) => setEditDraft((s) => ({ ...s, title: e.target.value }))}
-                      className="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-400 focus:border-indigo-400"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">Mô tả</label>
-                    <Editor
-                      content={editDraft.summary}
-                      placeholder="Nhập mô tả"
-                      toolbarMaxLines={2}
-                      className="min-h-[220px]"
-                      onChange={(summary) => setEditDraft((s) => ({ ...s, summary }))}
-                    />
-                  </div>
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={handleSaveEdit}
-                      className="inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
-                    >
-                      Lưu
-                    </button>
-                  </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200/90 backdrop-blur">
+                <p className="mb-2 text-base font-semibold text-slate-100">{selected.title}</p>
+                <div className="max-w-none whitespace-pre-wrap wrap-break-word text-sm text-slate-200/90">
+                  {sanitize(selected.content) || "—"}
                 </div>
-              ) : (
-                <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200/90 backdrop-blur">
-                  <p className="mb-2 text-base font-semibold text-slate-100">{selected.title}</p>
-                  <div className="max-w-none whitespace-pre-wrap wrap-break-word text-sm text-slate-200/90">
-                    {sanitize(selected.content) || "—"}
-                  </div>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-slate-100">Ghi chú con</p>
+                  <span className="text-xs text-slate-300/70">{childNotesInfinite.total || childNotesInfinite.data.length} mục</span>
                 </div>
-              )}
+
+                {childNotesInfinite.loading ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="rounded-lg border border-white/10 bg-white/5 p-3">
+                        <div className="h-4 w-2/3 animate-pulse rounded bg-white/10" />
+                        <div className="mt-2 h-3 w-full animate-pulse rounded bg-white/10" />
+                        <div className="mt-2 h-3 w-4/5 animate-pulse rounded bg-white/10" />
+                      </div>
+                    ))}
+                  </div>
+                ) : childNotesInfinite.error ? (
+                  <div className="rounded-lg border border-red-400/20 bg-red-500/10 p-3 text-sm text-red-200">
+                    {(childNotesInfinite.error as Error)?.message || "Lỗi khi tải ghi chú con."}
+                  </div>
+                ) : childNotesInfinite.data.length > 0 ? (
+                  <ScrollInfinite
+                    enabled
+                    hasNextPage={Boolean(childNotesInfinite.hasNextPage)}
+                    isFetchingNextPage={childNotesInfinite.fetchingNextPage}
+                    onLoadMore={() => childNotesInfinite.fetchNextPage()}
+                    className="space-y-3"
+                    endMessage={
+                      <div className="rounded-lg border border-dashed border-white/15 bg-white/5 p-3 text-center text-xs text-slate-300/80">
+                        Bạn đã xem hết ghi chú con.
+                      </div>
+                    }
+                  >
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {childNotesInfinite.data.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => setSelectedChild({ id: c.id, title: c.title, content: c.content, creator: c.creator, updatedAt: c.updatedAt })}
+                          className="text-left rounded-lg border border-white/10 bg-white/5 p-3 transition hover:border-white/20 hover:bg-white/[0.07]"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-slate-100">{c.title}</p>
+                              <p className="mt-1 line-clamp-2 text-xs text-slate-300/80">{sanitize(c.content, 120) || "—"}</p>
+                            </div>
+                            <div className="flex shrink-0 items-center gap-2">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div>
+                                      <Avatar size="sm">
+                                        {c.creator.avatarUrl ? (
+                                          <AvatarImage src={c.creator.avatarUrl} alt={c.creator.username} />
+                                        ) : null}
+                                        <AvatarFallback>{safeInitials(c.creator.username)}</AvatarFallback>
+                                      </Avatar>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent sideOffset={6}>@{c.creator.username}</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-300/80">
+                                {formatRelative(c.updatedAt, "—")}
+                              </span>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </ScrollInfinite>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-white/15 bg-white/5 p-3 text-sm text-slate-300/80">
+                    Chưa có ghi chú con.
+                  </div>
+                )}
+              </div>
             </div>
           </DialogContent>
         ) : null}
       </Dialog>
 
-      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Xóa ghi chú?</DialogTitle>
-            <DialogDescription>
-              Hành động này không thể hoàn tác. Bạn có chắc muốn xóa ghi chú{" "}
-              <span className="font-medium text-foreground">{selected?.title ?? "—"}</span>?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <button
-              type="button"
-              onClick={() => setIsDeleteConfirmOpen(false)}
-              disabled={deleteNote.isPending}
-              className="rounded-lg border px-4 py-2 text-sm font-medium transition hover:bg-muted"
-            >
-              Hủy
-            </button>
-            {deleteNote.error?.message ? (
-              <div className="mr-auto rounded-lg border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
-                {deleteNote.error.message}
-              </div>
-            ) : null}
-            <button
-              type="button"
-              onClick={handleDeleteSelected}
-              disabled={deleteNote.isPending}
-              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-60"
-            >
-              {deleteNote.isPending ? "Đang xóa..." : "Xóa"}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteNoteConfirmDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => (!open ? setDeleteTarget(null) : null)}
+        title={deleteTarget?.title ?? ""}
+        isPending={deleteNote.isPending}
+        errorMessage={deleteNote.error?.message || undefined}
+        onConfirm={handleDeleteSelected}
+      />
 
-      <Dialog open={isAddChildOpen} onOpenChange={setIsAddChildOpen}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Thêm ghi chú con</DialogTitle>
-            <DialogDescription>
-              Thêm ghi chú con cho note <span className="font-medium text-foreground">{selected?.title ?? "—"}</span>.
-            </DialogDescription>
-          </DialogHeader>
+      <UpdateNoteModal
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        value={editDraft}
+        onChange={setEditDraft}
+        isPending={updateNote.isPending}
+        errorMessage={updateNote.error?.message || undefined}
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSaveEdit();
+        }}
+      />
 
-          <form onSubmit={handleCreateChild} className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium" htmlFor="create-child-title">
-                Tiêu đề
-              </label>
-              <input
-                id="create-child-title"
-                value={childDraft.title}
-                onChange={(e) => setChildDraft((s) => ({ ...s, title: e.target.value }))}
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                placeholder="Ví dụ: Checklist"
-                required
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">Mô tả</label>
-              <Editor
-                content={childDraft.summary}
-                placeholder="Nhập mô tả"
-                toolbarMaxLines={2}
-                className="min-h-[200px]"
-                onChange={(summary) => setChildDraft((s) => ({ ...s, summary }))}
-              />
-            </div>
-            <DialogFooter>
-              <button
-                type="button"
-                onClick={() => setIsAddChildOpen(false)}
-                disabled={createNote.isPending}
-                className="rounded-lg border px-4 py-2 text-sm font-medium transition hover:bg-muted"
-              >
-                Hủy
-              </button>
-              {createNote.error?.message ? (
-                <div className="mr-auto rounded-lg border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
-                  {createNote.error.message}
-                </div>
-              ) : null}
-              <button
-                type="submit"
-                disabled={createNote.isPending}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
-              >
-                {createNote.isPending ? <>Đang tạo <LoadingDots/></> : "Tạo"}
-              </button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <ChildNoteDetailModal
+        open={Boolean(selectedChild)}
+        onOpenChange={(open) => (!open ? setSelectedChild(null) : null)}
+        note={
+          selectedChild
+            ? {
+                id: selectedChild.id,
+                title: selectedChild.title,
+                content: selectedChild.content,
+                updatedAt: selectedChild.updatedAt,
+                creator: {
+                  username: selectedChild.creator.username,
+                  avatarUrl: selectedChild.creator.avatarUrl,
+                },
+              }
+            : null
+        }
+        safeInitials={safeInitials}
+        deletePending={deleteNote.isPending}
+        onDelete={() => setDeleteTarget({ id: selectedChild?.id ?? 0, title: selectedChild?.title ?? "" })}
+        onEdit={() => {
+          if (!selectedChild) return;
+          setEditDraft({ title: selectedChild.title, summary: selectedChild.content });
+          setIsEditOpen(true);
+        }}
+      />
+
+      <CreateChildNoteModal
+        open={isAddChildOpen}
+        onOpenChange={setIsAddChildOpen}
+        parentTitle={selected?.title ?? "—"}
+        value={childDraft}
+        onChange={setChildDraft}
+        isPending={createNote.isPending}
+        errorMessage={createNote.error?.message || undefined}
+        onSubmit={handleCreateChild}
+      />
     </>
   );
 }
+
+export default TopicNotes;

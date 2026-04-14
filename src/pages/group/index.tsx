@@ -4,10 +4,10 @@ import { Link, useParams } from "react-router";
 import clientPaths from "@/paths/client";
 import { useDetailGroup } from "@/data/api/group";
 import { formatRelative } from "@/utils/date";
-import { useCreateTopic, useTopicsByGroup } from "@/data/api/topic";
+import { useCreateTopic, useTopicsByGroup, useUpdateTopic } from "@/data/api/topic";
 import { CreateTopicModal } from "./components/create-topic-modal";
 import { TopicTabs } from "./components/topic-tabs";
-import { TopicNotes } from "./components/topic-notes";
+import TopicNotes from "./components/topic-notes";
 import { EditTopicModal } from "./components/edit-topic-modal";
 
 const GroupPage = () => {
@@ -15,20 +15,20 @@ const GroupPage = () => {
   const groupDetail = useDetailGroup(id);
   const topicsQuery = useTopicsByGroup(id);
   const createTopic = useCreateTopic();
+  const updateTopic = useUpdateTopic();
   const [isCreateTopicOpen, setIsCreateTopicOpen] = useState(false);
   const [newTopicName, setNewTopicName] = useState("");
   const [activeTopicId, setActiveTopicId] = useState<number | null>(null);
   const [editTopic, setEditTopic] = useState<null | { id: number; name: string }>(null);
   const [editDraft, setEditDraft] = useState<{ name: string }>({ name: "" });
-  const [topicNameOverrides, setTopicNameOverrides] = useState<Record<number, string>>({});
   const [deletedTopicIds, setDeletedTopicIds] = useState<Record<number, true>>({});
 
   const topics = useMemo(() => {
     const raw = topicsQuery.data ?? [];
     return raw
       .filter((t) => !deletedTopicIds[t.id])
-      .map((t) => ({ ...t, name: topicNameOverrides[t.id] ?? t.name }));
-  }, [topicsQuery.data, topicNameOverrides, deletedTopicIds]);
+      .map((t) => ({ ...t }));
+  }, [topicsQuery.data, deletedTopicIds]);
 
   // keep activeTopicId stable with current topic list
   useEffect(() => {
@@ -172,13 +172,20 @@ const GroupPage = () => {
         }}
         value={editDraft}
         onChange={setEditDraft}
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
           const name = editDraft.name.trim();
           if (!name || !editTopic) return;
-          setTopicNameOverrides((prev) => ({ ...prev, [editTopic.id]: name }));
+          const groupId = Number(id);
+          if (!Number.isFinite(groupId)) return;
+
+          const res = await updateTopic.mutateAsync({ id: editTopic.id, name, groupId });
+          if (res.error) return;
           setEditTopic(null);
+          topicsQuery.refetch?.();
         }}
+        isPending={updateTopic.isPending}
+        errorMessage={updateTopic.error?.message || undefined}
       />
     </section>
   );

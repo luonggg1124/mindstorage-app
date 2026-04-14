@@ -1,4 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  checkPermissions,
+  getCurrentPosition,
+  requestPermissions,
+} from "@tauri-apps/plugin-geolocation";
+
+export const geolocationKeys = {
+  all: ["geolocation"] as const,
+  current: () => [...geolocationKeys.all, "current"] as const,
+};
 
 export type GeolocationCoords = {
   lat: number;
@@ -9,6 +19,47 @@ export type GeolocationCoords = {
   speed: number | null;
 };
 
+export type GeolocationQueryData = {
+  coords: GeolocationCoords;
+  timestamp: number;
+};
+
+function isTauriRuntime(): boolean {
+  if (typeof window === "undefined") return false;
+  const w = window as Window & { __TAURI_INTERNALS__?: unknown; __TAURI__?: unknown };
+  return Boolean(w.__TAURI_INTERNALS__ ?? w.__TAURI__);
+}
+
+export async function fetchGeolocationPosition(): Promise<GeolocationQueryData> {
+  let perm = await checkPermissions();
+
+  if (perm.location !== "granted") {
+    perm = await requestPermissions(["location"]);
+  }
+
+  if (perm.location !== "granted") {
+    throw new Error("Location permission denied");
+  }
+
+  const pos = await getCurrentPosition({
+    enableHighAccuracy: true,
+    timeout: 10000,
+    maximumAge: 0,
+  });
+
+  return {
+    coords: {
+      lat: pos.coords.latitude,
+      lon: pos.coords.longitude,
+      accuracy: pos.coords.accuracy ?? null,
+      altitude: pos.coords.altitude ?? null,
+      heading: pos.coords.heading ?? null,
+      speed: pos.coords.speed ?? null,
+    },
+    timestamp: pos.timestamp ?? Date.now(),
+  };
+}
+
 export type GeolocationState = {
   supported: boolean;
   loading: boolean;
@@ -16,88 +67,41 @@ export type GeolocationState = {
   timestamp: number | null;
   error: string | null;
   refresh: () => void;
+  invalidate: () => void;
 };
 
-type Options = {
-  /** Auto request location once on mount */
-  immediate?: boolean;
-  /** Pass-through to the Geolocation API */
-  positionOptions?: PositionOptions;
+type UseGeolocationOptions = {
+  /** Khi `false`, không tự fetch lúc mount (vẫn có thể gọi `refresh`). */
+  enabled?: boolean;
 };
 
-function formatGeoError(err: unknown) {
-  const fallback = "Không lấy được vị trí.";
-  if (!err || typeof err !== "object") return fallback;
+export function useGeolocation(options?: UseGeolocationOptions): GeolocationState {
+  const queryClient = useQueryClient();
+  const supported = isTauriRuntime();
+  const enabled = supported && (options?.enabled !== false);
 
-  const maybe = err as Partial<GeolocationPositionError>;
-  const code = typeof maybe.code === "number" ? maybe.code : null;
+  const query = useQuery({
+    queryKey: geolocationKeys.current(),
+    queryFn: fetchGeolocationPosition,
+    enabled,
+    retry: false,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+  });
 
-  // https://developer.mozilla.org/en-US/docs/Web/API/GeolocationPositionError/code
-  if (code === 1) return "Bạn đã từ chối quyền truy cập vị trí.";
-  if (code === 2) return "Không thể xác định vị trí (thiết bị/đường truyền).";
-  if (code === 3) return "Hết thời gian chờ khi lấy vị trí.";
-  return typeof maybe.message === "string" && maybe.message.trim() ? maybe.message : fallback;
+  const data = query.data;
+
+  return {
+    supported,
+    loading: query.isPending || query.isFetching,
+    coords: data?.coords ?? null,
+    timestamp: data?.timestamp ?? null,
+    error: query.error instanceof Error ? query.error.message : query.error ? String(query.error) : null,
+    refresh: () => {
+      void query.refetch();
+    },
+    invalidate: () => {
+      queryClient.invalidateQueries({ queryKey: geolocationKeys.current() });
+    },
+  };
 }
-
-export function useGeolocation(options?: Options): GeolocationState {
-  const supported = typeof window !== "undefined" && "geolocation" in navigator;
-  const positionOptions = options?.positionOptions;
-  const [loading, setLoading] = useState(false);
-  const [coords, setCoords] = useState<GeolocationCoords | null>(null);
-  const [timestamp, setTimestamp] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const requestIdRef = useRef(0);
-
-  const refresh = useCallback(() => {
-    if (!supported) {
-      setError("Trình duyệt không hỗ trợ Geolocation.");
-      return;
-    }
-
-    const requestId = ++requestIdRef.current;
-    setLoading(true);
-    setError(null);
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        // Ignore stale responses if user clicks quickly.
-        if (requestId !== requestIdRef.current) return;
-
-        setCoords({
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-          accuracy: Number.isFinite(pos.coords.accuracy) ? pos.coords.accuracy : null,
-          altitude: Number.isFinite(pos.coords.altitude ?? NaN) ? (pos.coords.altitude as number) : null,
-          heading: Number.isFinite(pos.coords.heading ?? NaN) ? (pos.coords.heading as number) : null,
-          speed: Number.isFinite(pos.coords.speed ?? NaN) ? (pos.coords.speed as number) : null,
-        });
-        setTimestamp(typeof pos.timestamp === "number" ? pos.timestamp : Date.now());
-        setLoading(false);
-      },
-      (err) => {
-        if (requestId !== requestIdRef.current) return;
-        setError(formatGeoError(err));
-        setLoading(false);
-      },
-      positionOptions
-    );
-  }, [supported, positionOptions]);
-
-  useEffect(() => {
-    if (options?.immediate) refresh();
-  }, [options?.immediate, refresh]);
-
-  return useMemo(
-    () => ({
-      supported,
-      loading,
-      coords,
-      timestamp,
-      error,
-      refresh,
-    }),
-    [supported, loading, coords, timestamp, error, refresh]
-  );
-}
-

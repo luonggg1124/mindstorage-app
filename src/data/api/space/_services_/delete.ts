@@ -1,18 +1,18 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { NoteSDK } from "../_sdk_";
-import { noteKeys } from "./get";
+import { SpaceSDK } from "../_sdk_";
+import { spaceKeys } from "./get";
 
-export const useCreateNote = () => {
+export const useDeleteSpace = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (body: { title: string; content?: string; topicId: number; parentId?: number | null }) => {
-      const response = await NoteSDK.create({ body });
+    mutationFn: async (params: { id: string | number }) => {
+      const response = await SpaceSDK.delete({ params });
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: noteKeys.all });
+      queryClient.invalidateQueries({ queryKey: spaceKeys.all });
     },
   });
 
@@ -27,6 +27,4 @@ export const useCreateNote = () => {
     reset: mutation.reset,
   };
 };
-
-
 
