@@ -12,34 +12,22 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { workspaceSpaces } from "@/data/workspace";
 import { CommandIcon, FolderKanbanIcon, HouseIcon } from "lucide-react";
 
-const navigationItems = [
-  {
-    title: "Trang chủ",
-    url: "/",
-    icon: <HouseIcon />,
-  },
-  {
-    title: "Spaces",
-    url: "/spaces",
-    icon: <FolderKanbanIcon />,
-    items: workspaceSpaces.map((space) => ({
-      title: space.name,
-      url: `/spaces/${space.id}`,
-      image: space.image,
-    })),
-  },
-];
-
-const sidebarUser = {
-  name: "Nguyen Van A",
-  email: "student@example.com",
-  avatar: "/avatars/user.jpg",
-};
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const navigationItems = [
+    {
+      title: "Trang chủ",
+      url: "/",
+      icon: <HouseIcon />,
+    },
+    {
+      title: "Không gian",
+      url: "/spaces",
+      icon: <FolderKanbanIcon />,
+    },
+  ];
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -63,7 +51,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter>
-        <NavUser user={sidebarUser} />
+        <NavUser  />
       </SidebarFooter>
     </Sidebar>
   );

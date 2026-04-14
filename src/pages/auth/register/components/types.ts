@@ -7,11 +7,14 @@ export type RegisterDraft = {
   hobbies: string[];
 
   // step 2
+  intendedUse: string[];
   username: string;
   password: string;
 
   // step 3
   email: string;
+  /** session trả về từ verifyEmail để submit kèm */
+  emailSession: string;
   emailCode: string;
   emailVerified: boolean;
 

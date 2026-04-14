@@ -1,11 +1,41 @@
 import type { CSSProperties } from "react";
-import { Outlet } from "react-router";
+import { useEffect } from "react";
+import { Outlet, useNavigate } from "react-router";
 
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./components/app-sidebar";
-
+import { useAuth } from "@/data/api/auth";
+import clientPaths from "@/paths/client";
+import { LoadingPage } from "@/components/page/loading-page";
+import { useGeolocation } from "@/hooks/use-geolocation";
 const MainLayout = () => {
+  const { user, hasHydrated } = useAuth();
+  const navigate = useNavigate();
+ 
+  const { coords, loading, error } = useGeolocation();
+
+  console.log(coords);
+  console.log(loading);
+  console.log(error);
+  
+  useEffect(() => {
+    if (!hasHydrated) return;
+    if (!user) {
+      navigate(clientPaths.auth.login.getPath(), { replace: true });
+    }
+  }, [hasHydrated, user, navigate]);
+
+  if (!hasHydrated) {
+    return <LoadingPage />;
+  }
+
+  if (!user) {
+    return (
+      <LoadingPage showFacts={true} subtitle="Đang chuyển đến trang đăng nhập…" />
+    );
+  }
+
   return (
     <div
       className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-950 text-slate-100"

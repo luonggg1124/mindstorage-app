@@ -1,140 +1,170 @@
 /* eslint-disable */
 
-import { getStorage, removeStorage, save, setStorage } from "@/utils/stronghold";
-import { useState } from "react";
-import { create } from "zustand";
-import { createJSONStorage, devtools, persist } from "zustand/middleware";
+import { useCallback, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { AuthSDK } from "../_sdk_";
-
-const AUTH_STORAGE_KEY = "auth-store";
-
-type AuthStore = {
-    user?: any;
-    permissions: string[];
-    hasHydrated: boolean;
-    hydrate: () => Promise<void>;
-    setUser: (next?: any) => void;
-    setPermissions: (next: string[]) => void;
-    setHasHydrated: (next: boolean) => void;
-    clear: () => void;
-};
-
-type AuthPersistedState = Pick<AuthStore, "user" | "permissions">;
-
-const strongholdStateStorage = {
-    getItem: async (name: string) => {
-        return (await getStorage(name)) ?? null;
-    },
-    setItem: async (name: string, value: string) => {
-        await setStorage(name, value);
-        await save();
-    },
-    removeItem: async (name: string) => {
-        await removeStorage(name);
-        await save();
-    },
-};
-
-export const useAuthStore = create<AuthStore>()(
-    devtools(
-        persist(
-            (set) => ({
-                user: undefined,
-                permissions: [],
-                hasHydrated: false,
-
-                hydrate: async () => {
-                    try {
-                        const raw = await getStorage(AUTH_STORAGE_KEY);
-                        if (!raw) {
-                            set({ hasHydrated: true });
-                            return;
-                        }
-                        const parsed = JSON.parse(raw);
-                        set({
-                            user: parsed?.state?.user ?? undefined,
-                            permissions: Array.isArray(parsed?.state?.permissions)
-                                ? parsed.state.permissions
-                                : [],
-                            hasHydrated: true,
-                        });
-                    } catch {
-                        set({ hasHydrated: true });
-                    }
-                },
-
-                setUser: (next) => set({ user: next }),
-                setPermissions: (next) => set({ permissions: next }),
-                setHasHydrated: (next) => set({ hasHydrated: next }),
-                clear: () => set({ user: undefined, permissions: [], hasHydrated: true }, false, "auth/clear"),
-            }),
-            {
-                name: AUTH_STORAGE_KEY,
-                storage: createJSONStorage<AuthPersistedState>(() => strongholdStateStorage),
-                partialize: (state) => ({
-                    user: state.user,
-                    permissions: state.permissions,
-                }),
-                onRehydrateStorage: () => (state) => {
-                    state?.setHasHydrated(true);
-                },
-                migrate: (persistedState, oldVersion) => {
-                    const state = persistedState as Partial<AuthStore>;
-                    if (oldVersion < 2) {
-                        return {
-                            user: state?.user ?? undefined,
-                            permissions: state?.permissions ?? [],
-                        } as AuthPersistedState;
-                    }
-                    return {
-                        user: state?.user ?? undefined,
-                        permissions: state?.permissions ?? [],
-                    } as AuthPersistedState;
-
-                }
-            }
-        ),
-        {
-            name: "auth-store-devtools"
-        }
-    )
-);
+import { useAuthStore } from "./store";
 
 export const useAuth = () => {
-    const user = useAuthStore((s) => s.user);
-    const permissions = useAuthStore((s) => s.permissions);
-    const hasHydrated = useAuthStore((s) => s.hasHydrated);
-    // const hydrate = useAuthStore((s) => s.hydrate);
-    // const setUser = useAuthStore((s) => s.setUser);
-    // const setPermissions = useAuthStore((s) => s.setPermissions);
-    // const clear = useAuthStore((s) => s.clear);
-    const [verifyEmailState, setVerifyEmailState] = useState<{
-        isLoading: boolean;
-        error?: string;
-    }>({
-        isLoading: false,
-        error: undefined,
-    });
+  const queryClient = useQueryClient();
+  const user = useAuthStore((s) => s.user);
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const refreshToken = useAuthStore((s) => s.refreshToken);
+  const hasHydrated = useAuthStore((s) => s.hasHydrated);
+  const setAccessToken = useAuthStore((s) => s.setAccessToken);
+  const setRefreshToken = useAuthStore((s) => s.setRefreshToken);
+  const setUser = useAuthStore((s) => s.setUser);
+  const clear = useAuthStore((s) => s.clear);
 
+  const [logoutState, setLogoutState] = useState<{
+    isLoading: boolean;
+    error?: { message: string };
+  }>({
+    isLoading: false,
+    error: undefined,
+  });
 
-    const verifyEmail = async (email: string) => {
-        try {
-            setVerifyEmailState({ isLoading: true, error: undefined });
-            const { data } = await AuthSDK.verifyEmail<true>({
-                body: {
-                    email,
-                },
-            });
+  const [verifyEmailState, setVerifyEmailState] = useState<{
+    isLoading: boolean;
+    error?: {
+      message: string;
+      status: number;
+      field?: string;
+    };
+  }>({
+    isLoading: false,
+    error: undefined,
+  });
 
-            if (data) {
-                setVerifyEmailState({ isLoading: false, error: undefined });
-            }
-            return;
-        } catch (error) {
-            setVerifyEmailState({ isLoading: false, error: error as string });
-            return;
-        }
+  const [registerState, setRegisterState] = useState<{
+    isLoading: boolean;
+    error?: {
+      message: string;
+      status: number;
+      field?: string;
+    };
+  }>({
+    isLoading: false,
+    error: undefined,
+  });
+
+  const [loginState, setLoginState] = useState<{
+    isLoading: boolean;
+    error?: {
+      message: string;
+      status: number;
+      field?: string;
+    };
+  }>({
+    isLoading: false,
+    error: undefined,
+  });
+
+  const logout = useCallback(async () => {
+    setLogoutState({ isLoading: true, error: undefined });
+    try {
+      clear();
+      queryClient.clear();
+      setLogoutState({ isLoading: false, error: undefined });
+      return true;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Đăng xuất thất bại.";
+      setLogoutState({ isLoading: false, error: { message } });
+      return false;
     }
+  }, [clear, queryClient]);
+  const verifyEmail = async (email: string) => {
+    setVerifyEmailState({ isLoading: true, error: undefined });
+    const { data, error } = await AuthSDK.verifyEmail({
+      body: {
+        email,
+      },
+    });
+    if (error) {
+      setVerifyEmailState({ isLoading: false, error });
+    }
+    if (data) {
+      setVerifyEmailState({ isLoading: false, error: undefined });
+      return data;
+    }
+    return undefined;
+  };
 
-    return { user, permissions, hasHydrated, verifyEmail, verifyEmailState };
+  const register = async (body: {
+    email: string;
+    username: string;
+    password: string;
+    session: string;
+    code: string;
+    fullName?: string;
+    hobbies?: string;
+    intendedUse?: string;
+  }) => {
+    setRegisterState({ isLoading: true, error: undefined });
+    const { data, error } = await AuthSDK.register({
+      body: {
+        email: body.email,
+        username: body.username,
+        password: body.password,
+        session: body.session,
+        code: body.code,
+        fullName: body.fullName ?? "",
+        hobbies: body.hobbies ?? "",
+        intendedUse: body.intendedUse ?? "",
+      },
+    });
+    if (error) {
+      setRegisterState({ isLoading: false, error });
+      return undefined;
+    }
+    if (data) {
+      setAccessToken(data.accessToken);
+      setRefreshToken(data.refreshToken);
+      setUser(data.user);
+      setRegisterState({ isLoading: false, error: undefined });
+      return data;
+    }
+    setRegisterState({ isLoading: false, error: undefined });
+    return undefined;
+  };
+
+  const login = async (body: { username: string; password: string }) => {
+    setLoginState({ isLoading: true, error: undefined });
+    const { data, error } = await AuthSDK.login({
+      body: {
+        username: body.username.trim(),
+        password: body.password,
+      },
+    });
+    if (error) {
+      setLoginState({ isLoading: false, error });
+      return undefined;
+    }
+    
+    
+    if (data) {
+      setAccessToken(data.accessToken);
+      setRefreshToken(data.refreshToken);
+      setUser(data.user);
+      setLoginState({ isLoading: false, error: undefined });
+      return data;
+    }
+    setLoginState({ isLoading: false, error: undefined });
+    return undefined;
+  };
+
+  return {
+    user,
+    accessToken,
+    refreshToken,
+    hasHydrated,
+    verifyEmail,
+    verifyEmailState,
+    register,
+    registerState,
+    login,
+    loginState,
+    logout,
+    logoutState,
+  };
 };

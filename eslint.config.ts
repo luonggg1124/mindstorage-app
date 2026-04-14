@@ -14,6 +14,12 @@ export default defineConfig([
     }
   },
   {
+    files: ["src/data/api/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+    },
+  },
+  {
     ignores: [
             "node_modules/",
             ".husky/",
