@@ -8,16 +8,15 @@ import { AppSidebar } from "./components/app-sidebar";
 import { useAuth } from "@/data/api/auth";
 import clientPaths from "@/paths/client";
 import { LoadingPage } from "@/components/page/loading-page";
-import { useGeolocation } from "@/hooks/use-geolocation";
+
 const MainLayout = () => {
   const { user, hasHydrated } = useAuth();
   const navigate = useNavigate();
  
-  const { coords, loading, error } = useGeolocation();
 
-  console.log(coords);
-  console.log(loading);
-  console.log(error);
+
+  
+ 
   
   useEffect(() => {
     if (!hasHydrated) return;
