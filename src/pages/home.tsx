@@ -11,7 +11,7 @@ export default function Home() {
       : weather.data.weather.conditionIcon
     : null;
 
-  // Fake data: thay bằng hook/api thật sau
+  
   const stats = [
     { label: "Spaces", value: 3, hint: "+1 tuần này" },
     { label: "Groups", value: 12, hint: "đang hoạt động" },

@@ -3,7 +3,7 @@ import { GraduationCap } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-const APP_NAME = "Java Assignment";
+const APP_NAME = "MindStorage";
 
 const FACTS = [
   "Bạn có biết: Hồ Chí Minh (1890–1969) quê ở Kim Liên, Nghệ An — Người đã đọc Tuyên ngôn độc lập nước Việt Nam Dân chủ Cộng hòa ngày 2 tháng 9 năm 1945 tại Ba Đình.",

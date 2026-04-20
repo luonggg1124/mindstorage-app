@@ -5,6 +5,7 @@ import clientPaths from "@/paths/client";
 import Chart from "@/components/custom/chart";
 import type { ApexOptions } from "apexcharts";
 import { useAuth } from "@/data/api/auth";
+import { FriendSearchDialogTrigger } from "./components/friend-search-dialog";
 
 const MyProfilePage = () => {
   const profile = currentUserProfile;
@@ -138,12 +139,7 @@ const MyProfilePage = () => {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Link
-              to={clientPaths.profile.detail.getPath(profile.id)}
-              className="inline-flex rounded-full bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-400"
-            >
-              Xem public profile
-            </Link>
+            <FriendSearchDialogTrigger />
             <Link
               to={clientPaths.space.list.getPath()}
               className="inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10"
