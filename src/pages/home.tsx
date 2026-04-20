@@ -1,25 +1,9 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import clientPaths from "@/paths/client";
 import { useWeather } from "@/data/api/utils";
 
-function formatCurrentTime(): string {
-  return new Intl.DateTimeFormat("vi-VN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).format(new Date());
-}
 
 export default function Home() {
-  const [currentTime, setCurrentTime] = useState(formatCurrentTime);
-
-  useEffect(() => {
-    const id = window.setInterval(() => setCurrentTime(formatCurrentTime()), 1000);
-    return () => window.clearInterval(id);
-  }, []);
-
   const weather = useWeather();
   const weatherIcon = weather.data?.weather?.conditionIcon
     ? weather.data.weather.conditionIcon.startsWith("//")
@@ -58,7 +42,12 @@ export default function Home() {
 
       {/* Widgets row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="relative  overflow-hidden rounded-2xl border  p-4 shadow-sm backdrop-blur">
+        {weather.loading ? (
+          <div className="relative  overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm backdrop-blur animate-pulse">
+            <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-white/10 via-transparent to-transparent" />
+          </div>
+        ) : (
+          <div className="relative  overflow-hidden rounded-2xl border  p-4 shadow-sm backdrop-blur">
           
           
 
@@ -85,7 +74,7 @@ export default function Home() {
               >
                 Làm mới
               </button>
-              <div className="tabular-nums text-[11px] text-white/60">{currentTime}</div>
+             
             </div>
           </div>
 
@@ -96,17 +85,8 @@ export default function Home() {
               <div className="text-sm text-red-500">
                 {weather.error instanceof Error ? weather.error.message : String(weather.error)}
               </div>
-            ) : weather.loading || !weather.data ? (
-              <div className="space-y-3">
-                <div className="text-sm text-white/80">Đang tải thời tiết...</div>
-                <div className="h-4 w-28 animate-pulse rounded bg-white/10" />
-                <div className="h-12 w-24 animate-pulse rounded bg-white/10" />
-                <div className="h-4 w-32 animate-pulse rounded bg-white/10" />
-                <div className="flex flex-wrap gap-2 pt-1">
-                  <div className="h-6 w-24 animate-pulse rounded-full bg-white/10" />
-                  <div className="h-6 w-20 animate-pulse rounded-full bg-white/10" />
-                </div>
-              </div>
+            ) : !weather.data ? (
+              <div className="text-sm text-white/80">Chưa có dữ liệu.</div>
             ) : (
               <>
                 <div>
@@ -146,6 +126,7 @@ export default function Home() {
             )}
           </div>
         </div>
+        )}
 
         {stats.map((s) => (
           <div key={s.label} className="rounded-2xl border border-border/50 bg-transparent p-4 shadow-sm backdrop-blur-md">

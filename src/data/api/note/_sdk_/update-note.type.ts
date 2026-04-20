@@ -5,6 +5,7 @@ export type UpdateNoteRequest = {
   body: {
     title: string;
     content?: string;
+    topicId: number;
   };
 };
 

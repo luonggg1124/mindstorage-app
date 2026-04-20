@@ -12,12 +12,6 @@ import { LoadingPage } from "@/components/page/loading-page";
 const MainLayout = () => {
   const { user, hasHydrated } = useAuth();
   const navigate = useNavigate();
- 
-
-
-  
- 
-  
   useEffect(() => {
     if (!hasHydrated) return;
     if (!user) {
@@ -60,7 +54,7 @@ const MainLayout = () => {
             </div>
           </header>
 
-          <div className="flex-1 p-4 md:p-6">
+          <div className="h-[calc(100vh-4rem)] overflow-y-auto p-4 md:p-6">
             <Outlet />
           </div>
         </SidebarInset>

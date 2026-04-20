@@ -17,7 +17,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import type { INoteByTopicDto } from "@/data/api/note";
 import { useCreateNote, useDeleteNote, useNotesByParentInfinite, useNotesByTopicInfinite, useUpdateNote } from "@/data/api/note";
 import { toast } from "@/lib/toast";
-import { sanitize } from "@/lib/dompurify";
+import { sanitizeHtml } from "@/lib/dompurify";
 
 import { ChildNoteDetailModal } from "./child-note-detail-modal";
 import { CreateChildNoteModal } from "./create-child-note-modal";
@@ -113,12 +113,14 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
     if (!selected) return;
     const title = editDraft.title.trim();
     if (!title) return;
+    if (!activeTopicId) return;
 
     updateNote
       .mutateAsync({
         id: selected.id,
         title,
         content: editDraft.summary?.trim() || "",
+        topicId: activeTopicId,
       })
       .then((res) => {
         if (res.error) return;
@@ -268,7 +270,14 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
                       </Tooltip>
                     </TooltipProvider>
                   </div>
-                  <p className="mt-2 line-clamp-3 text-sm text-slate-300/85">{sanitize(n.content, 180) || "—"}</p>
+                  {sanitizeHtml(n.content) ? (
+                    <div
+                      className="prose prose-invert mt-2 line-clamp-3 max-w-none text-sm text-slate-300/85 prose-p:my-1 prose-a:text-sky-300"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(n.content) }}
+                    />
+                  ) : (
+                    <p className="mt-2 line-clamp-3 text-sm text-slate-300/85">—</p>
+                  )}
                 </button>
               ))}
             </div>
@@ -418,9 +427,14 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
 
               <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200/90 backdrop-blur">
                 <p className="mb-2 text-base font-semibold text-slate-100">{selected.title}</p>
-                <div className="max-w-none whitespace-pre-wrap wrap-break-word text-sm text-slate-200/90">
-                  {sanitize(selected.content) || "—"}
-                </div>
+                {sanitizeHtml(selected.content) ? (
+                  <div
+                    className="prose prose-invert max-w-none text-sm text-slate-200/90 prose-p:my-2 prose-a:text-sky-300"
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(selected.content) }}
+                  />
+                ) : (
+                  <div className="text-sm text-slate-200/90">—</div>
+                )}
               </div>
 
               <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur">
@@ -467,7 +481,14 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                               <p className="truncate text-sm font-semibold text-slate-100">{c.title}</p>
-                              <p className="mt-1 line-clamp-2 text-xs text-slate-300/80">{sanitize(c.content, 120) || "—"}</p>
+                              {sanitizeHtml(c.content) ? (
+                                <div
+                                  className="prose prose-invert mt-1 line-clamp-2 max-w-none text-xs text-slate-300/80 prose-p:my-1 prose-a:text-sky-300"
+                                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(c.content) }}
+                                />
+                              ) : (
+                                <p className="mt-1 line-clamp-2 text-xs text-slate-300/80">—</p>
+                              )}
                             </div>
                             <div className="flex shrink-0 items-center gap-2">
                               <TooltipProvider>

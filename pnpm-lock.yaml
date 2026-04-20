@@ -149,6 +149,9 @@ importers:
       '@tiptap/starter-kit':
         specifier: ^3.22.0
         version: 3.22.0
+      apexcharts:
+        specifier: ^5.10.6
+        version: 5.10.6
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -2382,6 +2385,9 @@ packages:
   ansi-styles@4.3.0:
     resolution: {integrity: sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg==}
     engines: {node: '>=8'}
+
+  apexcharts@5.10.6:
+    resolution: {integrity: sha512-FJQGbso3iRuOwUYnj0yUhkWeKeJE6aboVol+ae09lsc+lbLMWZqSRbrAWVa/qishLiaeG2icxdvmVkm+9n6kOQ==}
 
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
@@ -6770,6 +6776,8 @@ snapshots:
   ansi-styles@4.3.0:
     dependencies:
       color-convert: 2.0.1
+
+  apexcharts@5.10.6: {}
 
   argparse@2.0.1: {}
 

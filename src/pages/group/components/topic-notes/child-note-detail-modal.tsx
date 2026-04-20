@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatRelative } from "@/utils/date";
-import { sanitize } from "@/lib/dompurify";
+import { sanitizeHtml } from "@/lib/dompurify";
 
 export function ChildNoteDetailModal({
   open,
@@ -85,9 +85,14 @@ export function ChildNoteDetailModal({
 
             <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200/90 backdrop-blur">
               <p className="mb-2 text-base font-semibold text-slate-100">{note.title}</p>
-              <div className="max-w-none whitespace-pre-wrap wrap-break-word text-sm text-slate-200/90">
-                {sanitize(note.content) || "—"}
-              </div>
+              {sanitizeHtml(note.content) ? (
+                <div
+                  className="prose prose-invert max-w-none text-sm text-slate-200/90 prose-p:my-2 prose-a:text-sky-300"
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(note.content) }}
+                />
+              ) : (
+                <div className="text-sm text-slate-200/90">—</div>
+              )}
             </div>
           </div>
         </DialogContent>
