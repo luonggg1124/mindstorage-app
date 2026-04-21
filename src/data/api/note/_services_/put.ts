@@ -7,7 +7,7 @@ export const useUpdateNote = () => {
     const queryClient = useQueryClient();
   
     const mutation = useMutation({
-      mutationFn: async (body: { id: string | number; title: string; content?: string; topicId: number }) => {
+      mutationFn: async (body: { id: string | number; title: string; content?: string; topicId: string }) => {
         const response = await NoteSDK.update({
           params: { id: body.id },
           body: { title: body.title, content: body.content, topicId: body.topicId },

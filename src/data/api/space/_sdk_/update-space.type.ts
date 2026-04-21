@@ -8,7 +8,7 @@ export type UpdateSpaceRequest = {
 
 export type UpdateSpaceResponse = {
   201: {
-    id: number;
+    id: string;
     name: string;
     description: string;
     createdAt: string;

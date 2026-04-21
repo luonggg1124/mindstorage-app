@@ -5,6 +5,10 @@ const userPaths = {
     existsUsername: {
         path: "/api/user/valid-username-password",
         getPath: (queries?: Record<string, string | number | boolean>) => `/api/user/valid-username-password${buildQueryString(queries)}`,
-    }
+    },
+    myProfile: {
+        path: "/api/user/my-profile",
+        getPath: (queries?: Record<string, string | number | boolean>) => `/api/user/my-profile${buildQueryString(queries)}`,
+    },
 }
 export default userPaths;

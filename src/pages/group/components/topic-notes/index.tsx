@@ -31,7 +31,7 @@ function safeInitials(value: string) {
 }
 
 type TopicNotesProps = {
-  activeTopicId: number | null;
+  activeTopicId: string | null;
   activeTopicName?: string;
 };
 
@@ -42,7 +42,7 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
   const updateNote = useUpdateNote();
   const deleteNote = useDeleteNote();
 
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editDraft, setEditDraft] = useState({ title: "", summary: "" });
 
@@ -50,14 +50,14 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
   const [childDraft, setChildDraft] = useState({ title: "", summary: "" });
 
   const [selectedChild, setSelectedChild] = useState<null | {
-    id: number;
+    id: string;
     title: string;
     content: string;
     creator: INoteByTopicDto["creator"];
     updatedAt: string;
   }>(null);
 
-  const [deleteTarget, setDeleteTarget] = useState<null | { id: number; title: string }>(null);
+  const [deleteTarget, setDeleteTarget] = useState<null | { id: string; title: string }>(null);
 
   const [q, setQ] = useState("");
   const debouncedQ = useDebounce(q, 500);
@@ -567,7 +567,7 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
         }
         safeInitials={safeInitials}
         deletePending={deleteNote.isPending}
-        onDelete={() => setDeleteTarget({ id: selectedChild?.id ?? 0, title: selectedChild?.title ?? "" })}
+        onDelete={() => setDeleteTarget(selectedChild ? { id: selectedChild.id, title: selectedChild.title } : null)}
         onEdit={() => {
           if (!selectedChild) return;
           setEditDraft({ title: selectedChild.title, summary: selectedChild.content });

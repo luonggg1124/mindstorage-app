@@ -6,24 +6,31 @@ import Chart from "@/components/custom/chart";
 import type { ApexOptions } from "apexcharts";
 import { useAuth } from "@/data/api/auth";
 import { FriendSearchDialogTrigger } from "./components/friend-search-dialog";
+import { useMyProfile } from "@/data/api/user";
 
 const MyProfilePage = () => {
   const profile = currentUserProfile;
   const { user } = useAuth();
+  const { data: myProfile, loading } = useMyProfile();
 
-  const displayName = (user?.fullName ?? "").trim() || user?.username || profile.name;
+  const displayName =
+    (myProfile?.fullName ?? "").trim() ||
+    (user?.fullName ?? "").trim() ||
+    myProfile?.username ||
+    user?.username ||
+    profile.name;
   const handle = user?.username ? `@${user.username}` : `@${profile.id}`;
-  const email = user?.email || profile.email;
+  const email = myProfile?.email || user?.email || profile.email;
   const verifiedLabel = user ? (user.verified ? "Verified" : "Unverified") : "Sample";
 
   const hobbyChips =
-    (user?.hobbies ?? "")
+    (myProfile?.hobbies ?? user?.hobbies ?? "")
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean)
       .slice(0, 8) ?? [];
   const chips = hobbyChips.length > 0 ? hobbyChips : profile.skills;
-  const bioText = (user?.hobbies ?? "").trim() || profile.bio;
+  const bioText = (myProfile?.hobbies ?? user?.hobbies ?? "").trim() || profile.bio;
 
   // Fake data (tạm thời) — thay bằng API thật sau
   const activitySeries = [
@@ -98,6 +105,24 @@ const MyProfilePage = () => {
     <section className="space-y-6">
       {/* Header */}
       <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm backdrop-blur">
+        {loading ? (
+          <div className="space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="h-14 w-14 animate-pulse rounded-2xl bg-white/10" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="h-4 w-24 animate-pulse rounded bg-white/10" />
+                <div className="h-8 w-64 max-w-full animate-pulse rounded bg-white/10" />
+                <div className="h-4 w-72 max-w-full animate-pulse rounded bg-white/10" />
+              </div>
+            </div>
+            <div className="h-4 w-full max-w-2xl animate-pulse rounded bg-white/10" />
+            <div className="flex flex-wrap gap-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-7 w-20 animate-pulse rounded-full bg-white/10" />
+              ))}
+            </div>
+          </div>
+        ) : (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
             <div className="flex items-start gap-4">
@@ -148,26 +173,44 @@ const MyProfilePage = () => {
             </Link>
           </div>
         </div>
+        )}
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur">
-          <p className="text-xs text-slate-300/70">Bài viết</p>
-          <p className="mt-2 text-3xl font-semibold text-slate-100">{profile.stats.posts}</p>
-          <p className="mt-1 text-xs text-slate-300/70">Tổng bài/ghi chú đã tạo</p>
+      {loading ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur">
+              <div className="h-4 w-32 animate-pulse rounded bg-white/10" />
+              <div className="mt-3 h-9 w-20 animate-pulse rounded bg-white/10" />
+              <div className="mt-2 h-3 w-36 animate-pulse rounded bg-white/10" />
+            </div>
+          ))}
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur">
-          <p className="text-xs text-slate-300/70">Followers</p>
-          <p className="mt-2 text-3xl font-semibold text-slate-100">{profile.stats.followers}</p>
-          <p className="mt-1 text-xs text-slate-300/70">Lượt theo dõi</p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur">
+            <p className="text-xs text-slate-300/70">Không gian</p>
+            <p className="mt-2 text-3xl font-semibold text-slate-100">{myProfile?.spacesCount ?? "—"}</p>
+            <p className="mt-1 text-xs text-slate-300/70">Tổng số space</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur">
+            <p className="text-xs text-slate-300/70">Không gian đã tham gia</p>
+            <p className="mt-2 text-3xl font-semibold text-slate-100">{myProfile?.spaceMembersCount ?? "—"}</p>
+            <p className="mt-1 text-xs text-slate-300/70">Số space bạn đang tham gia</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur">
+            <p className="text-xs text-slate-300/70">Followers</p>
+            <p className="mt-2 text-3xl font-semibold text-slate-100">{myProfile?.followersCount ?? "0"}</p>
+            <p className="mt-1 text-xs text-slate-300/70">Lượt theo dõi</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur">
+            <p className="text-xs text-slate-300/70">Following</p>
+            <p className="mt-2 text-3xl font-semibold text-slate-100">{myProfile?.followingCount ?? "0"}</p>
+            <p className="mt-1 text-xs text-slate-300/70">Bạn đang theo dõi</p>
+          </div>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur">
-          <p className="text-xs text-slate-300/70">Nhóm tham gia</p>
-          <p className="mt-2 text-3xl font-semibold text-slate-100">{profile.stats.groups}</p>
-          <p className="mt-1 text-xs text-slate-300/70">Số group bạn đang hoạt động</p>
-        </div>
-      </div>
+      )}
 
       {/* Charts + highlights */}
       <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">

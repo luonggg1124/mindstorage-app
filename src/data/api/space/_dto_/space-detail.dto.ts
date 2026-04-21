@@ -1,5 +1,5 @@
 export interface ISpaceDetailDto {
-  id: number;
+  id: string;
   name: string;
   description: string;
   /** Có thể rỗng nếu backend chưa gán ảnh */

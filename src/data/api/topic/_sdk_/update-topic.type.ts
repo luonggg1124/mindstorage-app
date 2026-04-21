@@ -4,15 +4,15 @@ export type UpdateTopicRequest = {
   };
   body: {
     name: string;
-    groupId: number;
+    groupId: string;
   };
 };
 
 export type UpdateTopicResponse = {
   201: {
-    id: number;
+    id: string;
     name: string;
-    groupId: number;
+    groupId: string;
     createdAt: string;
     updatedAt: string;
   };

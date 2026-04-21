@@ -7,7 +7,7 @@ export const useUpdateTopic = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (body: { id: string | number; name: string; groupId: number }) => {
+    mutationFn: async (body: { id: string | number; name: string; groupId: string }) => {
       const response = await TopicSDK.update({
         params: { id: body.id },
         body: { name: body.name, groupId: body.groupId },

@@ -7,7 +7,7 @@ export type CreateSpaceRequest = {
 
 export type CreateSpaceResponse = {
   201: {
-    id: number;
+    id: string;
     name: string;
     description: string;
     createdAt: string;

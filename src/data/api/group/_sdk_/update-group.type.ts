@@ -5,13 +5,13 @@ export type UpdateGroupRequest = {
   body: {
     name: string;
     description?: string;
-    spaceId: number;
+    spaceId: string;
   };
 };
 
 export type UpdateGroupResponse = {
   201: {
-    id: number;
+    id: string;
     name: string;
     description: string;
     createdAt: string;

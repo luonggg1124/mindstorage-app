@@ -30,8 +30,8 @@ const SpaceDetailPage = () => {
   const updateGroup = useUpdateGroup();
   const deleteGroup = useDeleteGroup();
   const [isAddGroupOpen, setIsAddGroupOpen] = useState(false);
-  const [editGroup, setEditGroup] = useState<null | { id: number; name: string; description: string }>(null);
-  const [deleteTarget, setDeleteTarget] = useState<null | { id: number; name: string }>(null);
+  const [editGroup, setEditGroup] = useState<null | { id: string; name: string; description: string }>(null);
+  const [deleteTarget, setDeleteTarget] = useState<null | { id: string; name: string }>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [newGroup, setNewGroup] = useState({ name: "", description: "" });
 

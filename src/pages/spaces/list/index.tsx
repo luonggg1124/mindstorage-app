@@ -33,8 +33,8 @@ const SpacesPage = () => {
     [spaces],
   );
   const [isCreateSpaceOpen, setIsCreateSpaceOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<null | { id: number; name: string; description: string }>(null);
-  const [deleteTarget, setDeleteTarget] = useState<null | { id: number; name: string }>(null);
+  const [editTarget, setEditTarget] = useState<null | { id: string; name: string; description: string }>(null);
+  const [deleteTarget, setDeleteTarget] = useState<null | { id: string; name: string }>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [newSpace, setNewSpace] = useState({
     name: "",

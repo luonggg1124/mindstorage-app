@@ -1,7 +1,7 @@
 
 
 export interface IMySpaceDto {
-    id: number;
+    id: string;
     name: string;
     description: string;
     groupCount: number;

@@ -20,8 +20,8 @@ type TopicTabsProps = {
   loading: boolean;
   errorMessage?: string;
   topics: ITopicByGroupDto[];
-  activeTopicId: number | null;
-  onSelectTopic: (id: number) => void;
+  activeTopicId: string | null;
+  onSelectTopic: (id: string) => void;
   onEditTopic?: (topic: ITopicByGroupDto) => void;
   onDeleteTopic?: (topic: ITopicByGroupDto) => void;
 };
@@ -35,8 +35,8 @@ export function TopicTabs({
   onEditTopic,
   onDeleteTopic,
 }: TopicTabsProps) {
-  const [hoveredId, setHoveredId] = useState<number | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const confirmDeleteTopic = useMemo(
     () => topics.find((t) => t.id === confirmDeleteId) ?? null,

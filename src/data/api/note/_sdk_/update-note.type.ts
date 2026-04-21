@@ -5,13 +5,13 @@ export type UpdateNoteRequest = {
   body: {
     title: string;
     content?: string;
-    topicId: number;
+    topicId: string;
   };
 };
 
 export type UpdateNoteResponse = {
   201: {
-    id: number;
+    id: string;
     title: string;
     content: string;
     createdAt: string;

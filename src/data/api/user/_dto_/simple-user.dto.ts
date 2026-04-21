@@ -1,9 +1,9 @@
-export type UserGender = "MALE" | "FEMALE" | "OTHER" | "UNKNOWN";
+import { UserGender } from "@/data/models/user";
+
 
 export interface ISimpleUserDto {
-  id: number;
+  id: string;
   username: string;
-  email: string;
   avatarUrl: string | null;
   fullName: string;
   gender: UserGender;

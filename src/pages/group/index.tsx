@@ -18,10 +18,10 @@ const GroupPage = () => {
   const updateTopic = useUpdateTopic();
   const [isCreateTopicOpen, setIsCreateTopicOpen] = useState(false);
   const [newTopicName, setNewTopicName] = useState("");
-  const [activeTopicId, setActiveTopicId] = useState<number | null>(null);
-  const [editTopic, setEditTopic] = useState<null | { id: number; name: string }>(null);
+  const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
+  const [editTopic, setEditTopic] = useState<null | { id: string; name: string }>(null);
   const [editDraft, setEditDraft] = useState<{ name: string }>({ name: "" });
-  const [deletedTopicIds, setDeletedTopicIds] = useState<Record<number, true>>({});
+  const [deletedTopicIds, setDeletedTopicIds] = useState<Record<string, true>>({});
 
   const topics = useMemo(() => {
     const raw = topicsQuery.data ?? [];
@@ -91,15 +91,15 @@ const GroupPage = () => {
     event.preventDefault();
     const name = newTopicName.trim();
     if (!name) return;
-    const groupId = Number(id);
-    if (!Number.isFinite(groupId)) return;
+    const groupId = String(id ?? "").trim();
+    if (!groupId) return;
     const res = await createTopic.mutateAsync({ name, groupId });
     if (res.error) return;
     setNewTopicName("");
     setIsCreateTopicOpen(false);
   };
 
-  const handleDeleteTopic = (topic: { id: number }) => {
+  const handleDeleteTopic = (topic: { id: string }) => {
     setDeletedTopicIds((prev) => ({ ...prev, [topic.id]: true }));
     if (activeTopicId === topic.id) {
       setActiveTopicId(topics.filter((t) => t.id !== topic.id)[0]?.id ?? null);
@@ -176,8 +176,8 @@ const GroupPage = () => {
           event.preventDefault();
           const name = editDraft.name.trim();
           if (!name || !editTopic) return;
-          const groupId = Number(id);
-          if (!Number.isFinite(groupId)) return;
+          const groupId = String(id ?? "").trim();
+          if (!groupId) return;
 
           const res = await updateTopic.mutateAsync({ id: editTopic.id, name, groupId });
           if (res.error) return;

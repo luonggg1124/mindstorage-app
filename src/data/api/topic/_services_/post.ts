@@ -6,7 +6,7 @@ export const useCreateTopic = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (body: { name: string; groupId: number }) => {
+    mutationFn: async (body: { name: string; groupId: string }) => {
       const response = await TopicSDK.create({ body });
       return response;
     },

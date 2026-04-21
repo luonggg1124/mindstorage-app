@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AuthSDK } from "../_sdk_";
 import { useAuthStore } from "./store";
+import { prefetchMyProfile } from "../../user";
 
 export const useAuth = () => {
   const queryClient = useQueryClient();
@@ -146,7 +147,9 @@ export const useAuth = () => {
       setAccessToken(data.accessToken);
       setRefreshToken(data.refreshToken);
       setUser(data.user);
+      prefetchMyProfile(queryClient);
       setLoginState({ isLoading: false, error: undefined });
+
       return data;
     }
     setLoginState({ isLoading: false, error: undefined });

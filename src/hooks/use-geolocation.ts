@@ -136,7 +136,7 @@ export function useGeolocation(options?: UseGeolocationOptions): GeolocationStat
     queryFn: fetchGeolocationPosition,
     enabled,
     retry: false,
-    staleTime: 30_000,
+    
     refetchOnWindowFocus: false,
   });
 

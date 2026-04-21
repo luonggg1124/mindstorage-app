@@ -1,5 +1,5 @@
 export interface IGroupBySpaceDto {
-  id: number;
+  id: string;
   name: string;
   topicCount: number;
   description: string;

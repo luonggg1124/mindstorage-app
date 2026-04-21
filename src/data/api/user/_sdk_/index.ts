@@ -4,6 +4,7 @@ import {
   ValidUsernamePasswordRequest,
   ValidUsernamePasswordResponse,
 } from "./valid-username-password.type";
+import type { MyProfileError, MyProfileResponse } from "./my-profile.type";
 import apiPaths from "@/paths/api";
 
 export class UserSDK {
@@ -20,7 +21,15 @@ export class UserSDK {
     });
     return response;
   }
+
+  static async myProfile<ThrowOnError extends boolean = false>() {
+    const response = await client.get<MyProfileResponse, MyProfileError, ThrowOnError>({
+      url: apiPaths.user.myProfile.path,
+    });
+    return response;
+  }
 }
 
 
 export type * from "./valid-username-password.type";
+export type * from "./my-profile.type";

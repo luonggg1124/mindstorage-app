@@ -1,7 +1,7 @@
 import type { ISimpleUserDto } from "@/data/api/user";
 
 export interface INoteByParentDto {
-  id: number;
+  id: string;
   title: string;
   content: string;
   creator: ISimpleUserDto;

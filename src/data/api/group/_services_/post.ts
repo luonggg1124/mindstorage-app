@@ -6,7 +6,7 @@ export const useCreateGroup = () => {
     const queryClient = useQueryClient();
   
     const mutation = useMutation({
-      mutationFn: async (body: { name: string; description: string; spaceId: number }) => {
+      mutationFn: async (body: { name: string; description: string; spaceId: string }) => {
         const response = await GroupSDK.create({
           body,
         });
@@ -33,7 +33,7 @@ export const useUpdateGroup = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async ( body: { id: string | number; name: string; description?: string; spaceId: number }) => {
+    mutationFn: async ( body: { id: string | number; name: string; description?: string; spaceId: string }) => {
       const response = await GroupSDK.update({
         params: { id: body.id },
         body: {

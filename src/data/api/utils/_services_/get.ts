@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useGeolocation } from "@/hooks/use-geolocation";
 import { UtilsSDK } from "../_sdk_";
 
@@ -10,6 +10,22 @@ export const utilsKeys = {
 
 function round6(n: number): number {
   return Math.round(n * 1_000_000) / 1_000_000;
+}
+
+const fetchWeather = async (queryKey: { latitude: number; longitude: number }) => {
+  const { data, error } = await UtilsSDK.weather({
+    query: {
+      latitude: queryKey.latitude,
+      longitude: queryKey.longitude,
+    },
+  });
+  if (error) {
+    throw new Error(error?.message || "Lỗi khi lấy thời tiết");
+  }
+  if (!data) {
+    throw new Error("Không có dữ liệu thời tiết");
+  }
+  return data;
 }
 
 export const useWeather = () => {
@@ -24,21 +40,7 @@ export const useWeather = () => {
 
   const query = useQuery({
     queryKey: utilsKeys.weather(queryKey),
-    queryFn: async () => {
-      const { data, error } = await UtilsSDK.weather({
-        query: {
-          latitude: queryKey.latitude,
-          longitude: queryKey.longitude,
-        },
-      });
-      if (error) {
-        throw new Error(error?.message || "Lỗi khi lấy thời tiết");
-      }
-      if (!data) {
-        throw new Error("Không có dữ liệu thời tiết");
-      }
-      return data;
-    },
+    queryFn:  () => fetchWeather(queryKey),
     enabled,
     retry: false,
     staleTime: 60_000,
@@ -65,3 +67,9 @@ export const useWeather = () => {
   };
 };
 
+export const prefetchWeather = (queryClient: QueryClient, queryKey: { latitude: number; longitude: number }) => {
+  return queryClient.prefetchQuery({
+    queryKey: utilsKeys.weather(queryKey),
+    queryFn: () => fetchWeather(queryKey),
+  });
+}

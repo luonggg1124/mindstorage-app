@@ -22,7 +22,7 @@ export function ChildNoteDetailModal({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   note: null | {
-    id: number;
+    id: string;
     title: string;
     content: string;
     updatedAt: string;

@@ -2,13 +2,13 @@ export type CreateGroupRequest = {
   body: {
     name: string;
     description: string;
-    spaceId: number;
+    spaceId: string;
   };
 };
 
 export type CreateGroupResponse = {
   201: {
-    id: number;
+    id: string;
     name: string;
     description: string;
     createdAt: string;

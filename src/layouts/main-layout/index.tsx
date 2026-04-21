@@ -6,11 +6,15 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./components/app-sidebar";
 import { useAuth } from "@/data/api/auth";
+import { useMyProfile } from "@/data/api/user";
 import clientPaths from "@/paths/client";
 import { LoadingPage } from "@/components/page/loading-page";
+import { useWeather } from "@/data/api/utils";
 
 const MainLayout = () => {
   const { user, hasHydrated } = useAuth();
+  useMyProfile(); // warm cache in background
+  useWeather();
   const navigate = useNavigate();
   useEffect(() => {
     if (!hasHydrated) return;
