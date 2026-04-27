@@ -1,0 +1,306 @@
+---
+description: API layer architecture and React Query rules
+globs:
+  - src/data/api/**/*
+alwaysApply: false
+---
+
+# API Rules
+
+Follow this architecture strictly:
+
+paths → sdk → services → component
+
+Never skip layers.
+
+---
+
+## Layer Responsibilities
+
+### Paths
+
+**Location**
+
+`@/paths/api/*`
+
+**Responsibilities**
+
+- Define all API endpoints in one centralized place
+- Provide static `path`
+- Provide dynamic `getPath()` for runtime usage
+- Handle query string generation using `buildQueryString`
+
+**Example**
+
+```ts
+detail: {
+  path: "/api/group/{id}",
+  getPath: (id) => `/api/group/${id}`,
+}
+```
+
+#### Rules
+- Never hardcode API URLs inside SDK, services, or components
+- All endpoints must come from `@/paths/api`
+- Query string generation must stay inside path definitions
+- Route param names must be explicit and match endpoint meaning
+
+#### Prefer
+
+```ts
+getPath(spaceId)
+```
+
+#### Avoid
+```ts
+getPath(id)
+```
+
+### SDK
+
+**Location**
+
+`src/data/api/{domain}/_sdk_`
+
+**Responsibilities**
+- Thin API contract layer
+- Call API endpoints only
+- Pass params, query, and body
+- Return typed API responses only
+
+**Example**
+```ts
+export class GroupSDK {
+  static async detail(request) {
+    return client.get({
+      url: apiPaths.group.detail.getPath(request.params.id),
+    });
+  }
+}
+```
+
+#### Rules
+- SDK methods must stay thin
+- Do not place business logic inside SDK
+- Do not place UI transformation inside SDK
+- Do not use React hooks inside SDK
+- Do not place form validation inside SDK
+- Do not compute derived data inside SDK
+- Use static class methods for SDK
+- One domain = one SDK class
+
+#### Forbidden
+
+```ts
+const response = await client.get(...)
+const transformed = response.data.map(...)
+return transformed
+```
+
+**Correct**
+```ts
+return client.get(...)
+```
+
+**Prefer**
+
+```ts
+GroupSDK.detail()
+```
+
+**Avoid** 
+
+```ts
+getGroupDetail()
+```
+
+
+### Services
+
+**Location**
+
+`src/data/api/{domain}/_services_`
+
+**Responsibilities**
+- React Query hooks
+- useQuery
+- useMutation
+- useInfiniteQuery
+- query keys
+- invalidate logic
+- enabled logic
+- normalized params
+- UI-facing return shape
+
+**Do not place**
+- endpoint definitions
+- raw client.get/post
+- JSX
+- heavy business logic
+
+
+### Query Keys
+#### Rules
+- Query keys must be centralized
+- Export query keys from the same service module
+
+**Example** 
+```ts
+export const groupKeys = {
+  all: ["group"],
+  detail: ({ id }) => [...groupKeys.all, "detail", { id }],
+}
+```
+
+#### Never
+
+```ts
+queryKey: ["group", id]
+```
+
+### Query Validation
+
+#### Rules
+- Normalize params before query execution
+
+**Example** 
+```ts
+const normalizedId = (id ?? "").trim()
+```
+- Use enabled to prevent invalid requests
+- Never call queries with invalid empty params
+
+**Example** 
+```ts
+const enabled = normalizedId.length > 0
+```
+
+### Query Function Rules
+#### Rules
+- Keep queryFn minimal
+queryFn should only:
+    - call SDK
+    - handle API errors
+    - return normalized response
+#### Avoid
+- heavy transformation
+- filtering
+- computed business logic
+- large data mapping
+
+**Bad**
+```ts
+queryFn: async () => {
+  transform()
+  compute()
+  filter()
+}
+```
+
+**Good**
+```ts
+queryFn: async () => {
+  const response = await GroupSDK.detail(...)
+  return response.data
+}
+```
+
+### Service Return Shape
+#### Rules
+- Hooks must return UI-friendly values
+#### Prefer
+```ts
+return {
+  loading,
+  data,
+  error,
+  refetch,
+  invalidate,
+}
+```
+#### Avoid
+```ts
+return query
+```
+- Do not expose raw React Query objects directly
+
+
+### Mutation Rules
+#### Rules 
+- Mutations must invalidate affected queries on success
+Always invalidate:
+- list queries
+- detail queries when needed
+
+**Example** 
+```ts
+onSuccess: () => {
+  queryClient.invalidateQueries(...)
+}
+```
+- Never leave stale cache after create/update/delete
+
+### Infinite Query Rules
+#### Rules
+- Do not include page inside infinite query keys 
+Infinite query keys must only contain stable filters
+
+**Correct**
+
+```ts
+spaceId
+q
+size
+```
+**Wrong**
+```ts
+page
+```
+**Example**
+```ts
+const { page, ...queryWithoutPage } = request.query
+```
+
+### Index Export Rules
+**Location**
+`src/data/api/{domain}/index.ts`
+
+**Responsibilities**
+- Export hooks from services only
+
+**Example**
+```ts
+export * from "./_services_/get"
+export * from "./_services_/post"
+export * from "./_services_/delete"
+```
+
+#### Rules
+- Components must import from domain index only
+
+**Prefer**
+```ts
+import { useGroupBySpace } from "@/data/api/group"
+```
+
+**Avoid**
+```ts
+import { useGroupBySpace } from "@/data/api/group/_services_/get"
+```
+- Do not import from internal folders directly 
+
+### Forbidden Rules
+
+#### Never
+- call API directly inside components
+- use `client.get/post` inside components
+- hardcode API URLs
+- hardcode query keys
+- skip invalidate after mutations
+- place business logic inside SDK
+- place React Query inside pages
+- import from _sdk_ directly inside components
+
+Always follow:
+
+paths → sdk → services → component

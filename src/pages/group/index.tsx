@@ -48,7 +48,7 @@ const GroupPage = () => {
           to={clientPaths.space.list.getPath()}
           className="inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10"
         >
-          Quay lại spaces
+          Quay lại
         </Link>
       </section>
     );
@@ -79,7 +79,7 @@ const GroupPage = () => {
           to={clientPaths.space.list.getPath()}
           className="inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10"
         >
-          Quay lại spaces
+          Quay lại
         </Link>
       </section>
     );
@@ -133,7 +133,7 @@ const GroupPage = () => {
               to={clientPaths.space.list.getPath()}
               className="inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10"
             >
-              Quay lại spaces
+              Quay lại
             </Link>
           </div>
         </div>

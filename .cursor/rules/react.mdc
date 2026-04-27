@@ -1,0 +1,61 @@
+---
+alwaysApply: true
+---
+
+## Component Naming
+- Component file names must use kebab-case
+
+Example: 
+create-modal.tsx
+user-profile-card.tsx
+
+- Component name must use PascalCase
+
+Example: 
+CreateModal
+UserProfileCard
+
+
+- Component name must match the file name
+
+Example: 
+create-modal.tsx -> CreateModal
+user-profile-card.tsx -> UserProfileCard
+
+- Prefer default export for page-level or feature-level components
+Example: 
+const CreateModal = () => {}
+export default CreateModal
+
+- Prefer named export for shared reusable UI components
+
+
+## Large Component Structure
+- Keep components small and focused
+
+- If  a component becomes too large or handles multiple responsibilities, convert it into a folder structure
+
+Example:
+
+Before:
+create-modal.tsx
+
+After: 
+create-modal/
+    index.tsx
+    modal-header.tsx
+    modal-form.tsx
+    modal-footer.tsx
+    types.ts
+
+- Use `index.tsx` as the main entry component
+
+- Child components should stay in the same folder
+
+- Shared logic should be extracted into hooks or utility files
+
+- Avoid files longer than 200-300 lines unless clearly justified
+
+- Prefer extracting child components before adding more conditional rerendering
+
+- If a component contains more than 3 major UI sections, consider folder structure refactoring

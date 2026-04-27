@@ -32,7 +32,7 @@ export function SidebarSearch({ open, onOpenChange }: SidebarSearchProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="left"
-        className="w-[360px] border-white/10 bg-slate-950/80 text-slate-100 backdrop-blur"
+        className="w-[360px] border-white/10 bg-slate-950/80 px-4 py-4 text-slate-100 backdrop-blur"
       >
         <SheetHeader>
           <SheetTitle className="text-slate-100">Tìm kiếm</SheetTitle>

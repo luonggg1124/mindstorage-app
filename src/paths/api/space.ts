@@ -24,7 +24,12 @@ const spacePaths = {
     mySpaces: {
         path: "/api/space/my-spaces",
         getPath: (queries?: Record<string, string | number | boolean>) => `/api/space/my-spaces${buildQueryString(queries)}`
-    }
+    },
+    members: {
+        path: "/api/space/{id}/members",
+        getPath: (id: string | number, queries?: Record<string, string | number | boolean>) =>
+            `/api/space/${id}/members${buildQueryString(queries)}`,
+    },
 }
 
 export default spacePaths;

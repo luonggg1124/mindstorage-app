@@ -20,7 +20,7 @@ function toFormData(data: Record<string, any>): FormData {
 
 
 
-let refreshPromise: Promise<any> | null = null;
+// let refreshPromise: Promise<any> | null = null;
 
 // Dùng khi cần upload file với relative URL (client-side)
 export async function request<

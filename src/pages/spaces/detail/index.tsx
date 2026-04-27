@@ -10,22 +10,32 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import clientPaths from "@/paths/client";
-import { useDetailSpace } from "@/data/api/space";
+import { useDetailSpace, useSpaceMembersInfinite } from "@/data/api/space";
 import { useCreateGroup, useDeleteGroup, useGroupsBySpaceInfinite, useUpdateGroup } from "@/data/api/group";
 import { formatRelative } from "@/utils/date";
 import LoadingDots from "@/components/animate/loading-dots";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import { MoreHorizontalIcon, PencilIcon, Settings2Icon, Share2Icon, Trash2Icon, UsersIcon } from "lucide-react";
 import { EditGroupModal } from "./components/edit-group-modal";
+import ShareSpaceModal from "./components/share-space-modal";
 import ScrollInfinite from "@/components/custom/scroll-infinite";
 import { useDebounce } from "@/hooks/use-debounce";
+import SpaceMembersSheet from "./components/space-members-sheet";
 
 const SpaceDetailPage = () => {
   const { id } = useParams();
   const spaceDetail = useDetailSpace(id);
   const [q, setQ] = useState("");
   const debouncedQ = useDebounce(q, 500);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [membersOpen, setMembersOpen] = useState(false);
+  const [memberQ, setMemberQ] = useState("");
+  const debouncedMemberQ = useDebounce(memberQ, 400);
   const groupsInfinite = useGroupsBySpaceInfinite({ params: { spaceId: id }, query: { q: debouncedQ, page: 1, size: 12 } });
+  const membersInfinite = useSpaceMembersInfinite({
+    params: { id: String(id ?? "") },
+    query: { q: debouncedMemberQ, size: 10 },
+  });
   const createGroup = useCreateGroup();
   const updateGroup = useUpdateGroup();
   const deleteGroup = useDeleteGroup();
@@ -93,8 +103,8 @@ const SpaceDetailPage = () => {
     event.preventDefault();
     const name = newGroup.name.trim();
     if (!name) return;
-    const spaceId = Number(id);
-    if (!Number.isFinite(spaceId)) return;
+    const spaceId = id;
+    
     const res = await createGroup.mutateAsync({
       name,
       description: newGroup.description.trim(),
@@ -106,8 +116,8 @@ const SpaceDetailPage = () => {
   };
   const handleUpdateGroup = async ({ name, description }: { name: string; description: string }) => {
     if (!editGroup) return;
-    const spaceId = Number(id);
-    if (!Number.isFinite(spaceId)) return;
+    const spaceId = id;
+   
     const res = await updateGroup.mutateAsync({ id: editGroup.id, name, description, spaceId });
     if (res.error) return;
     setEditGroup(null);
@@ -141,15 +151,54 @@ const SpaceDetailPage = () => {
             >
               Thêm nhóm
             </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10"
+                  aria-label="Cài đặt"
+                >
+                  <Settings2Icon className="size-4" />
+                  Cài đặt
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => setMembersOpen(true)}>
+                  <UsersIcon className="size-4" />
+                    <span>Thành viên</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <button
+              type="button"
+              onClick={() => setShareOpen(true)}
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10"
+            >
+              <Share2Icon className="size-4" />
+              Chia sẻ
+            </button>
             <Link
               to={clientPaths.space.list.getPath()}
               className="inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10"
             >
-              Quay lại spaces
+              Quay lại 
             </Link>
           </div>
         </div>
+
       </div>
+
+      <ShareSpaceModal open={shareOpen} onOpenChange={setShareOpen} entityId={String(id ?? "")} />
+
+      <SpaceMembersSheet
+        open={membersOpen}
+        onOpenChange={(next) => {
+          setMembersOpen(next);
+        }}
+        q={memberQ}
+        onChangeQ={setMemberQ}
+        membersInfinite={membersInfinite}
+      />
 
       <div className="flex flex-wrap items-center gap-3">
         <input

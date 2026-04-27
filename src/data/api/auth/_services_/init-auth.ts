@@ -26,7 +26,7 @@ export async function bootstrapAuthAfterPersist(): Promise<void> {
     setRefreshToken(d.refreshToken);
     setUser(d.user);
   } finally {
-    useAuthStore.getState().setAuthBootstrapDone(true);
+    // auth-store hiện không có cờ bootstrap; giữ finally để đảm bảo flow không bị throw
   }
 }
 

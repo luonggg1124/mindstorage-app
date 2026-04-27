@@ -146,7 +146,7 @@ export const useDetailGroup = (id?: string) => {
   const query = useQuery({
     queryKey: groupKeys.detail(queryKey),
     queryFn: async () => {
-      const { data, error } = await GroupSDK.detail({ params: { id: Number(normalizedId) } });
+      const { data, error } = await GroupSDK.detail({ params: { id: normalizedId } });
       if (error) {
         throw new Error(error?.message || "Lỗi khi lấy chi tiết group");
       }

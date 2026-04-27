@@ -10,5 +10,13 @@ const userPaths = {
         path: "/api/user/my-profile",
         getPath: (queries?: Record<string, string | number | boolean>) => `/api/user/my-profile${buildQueryString(queries)}`,
     },
+    search: {
+        path: "/api/user/search",
+        getPath: (queries?: Record<string, string | number | boolean>) => `/api/user/search${buildQueryString(queries)}`,
+    },
+    searchInvite: {
+        path: "/api/user/search/invite",
+        getPath: (queries?: Record<string, string | number | boolean>) => `/api/user/search/invite${buildQueryString(queries)}`,
+    },
 }
 export default userPaths;

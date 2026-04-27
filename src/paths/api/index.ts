@@ -5,6 +5,8 @@ import groupPaths from "./group";
 import topicPaths from "./topic";
 import notePaths from "./note";
 import utilsPaths from "./utils";
+import invitationPaths from "./invitation";
+import notificationPaths from "./notification";
 
 const apiPaths = {
     auth: authPaths,
@@ -14,6 +16,8 @@ const apiPaths = {
     topic: topicPaths,
     note: notePaths,
     utils: utilsPaths,
+    invitation: invitationPaths,
+    notification: notificationPaths,
 }
 
 export default apiPaths;

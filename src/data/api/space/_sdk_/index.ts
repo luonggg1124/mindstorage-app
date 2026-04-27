@@ -5,6 +5,7 @@ import type { CreateSpaceError, CreateSpaceRequest, CreateSpaceResponse } from "
 import type { SpaceDetailError, SpaceDetailRequest, SpaceDetailResponse } from "./detail-space.type";
 import type { UpdateSpaceError, UpdateSpaceRequest, UpdateSpaceResponse } from "./update-space.type";
 import type { DeleteSpaceError, DeleteSpaceRequest, DeleteSpaceResponse } from "./delete-space.type";
+import type { SpaceMembersError, SpaceMembersRequest, SpaceMembersResponse } from "./members.type";
 
 
 export class SpaceSDK {
@@ -20,6 +21,13 @@ export class SpaceSDK {
     static async detail<ThrowOnError extends boolean = false>(request: SpaceDetailRequest) {
         const response = await client.get<SpaceDetailResponse, SpaceDetailError, ThrowOnError>({
             url: apiPaths.space.detail.getPath(request.id),
+        });
+        return response;
+    }
+
+    static async members<ThrowOnError extends boolean = false>(request: SpaceMembersRequest) {
+        const response = await client.get<SpaceMembersResponse, SpaceMembersError, ThrowOnError>({
+            url: apiPaths.space.members.getPath(request.params.id, request.query),
         });
         return response;
     }
@@ -52,5 +60,6 @@ export class SpaceSDK {
 export type * from "./create-space.type";
 export type * from "./delete-space.type";
 export type * from "./detail-space.type";
+export type * from "./members.type";
 export type * from "./my-spaces.type";
 export type * from "./update-space.type";

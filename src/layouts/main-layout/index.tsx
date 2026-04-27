@@ -10,9 +10,11 @@ import { useMyProfile } from "@/data/api/user";
 import clientPaths from "@/paths/client";
 import { LoadingPage } from "@/components/page/loading-page";
 import { useWeather } from "@/data/api/utils";
+import { useNotificationSocket } from "@/data/api/notification/_services_/get";
 
 const MainLayout = () => {
   const { user, hasHydrated } = useAuth();
+  useNotificationSocket();
   useMyProfile(); // warm cache in background
   useWeather();
   const navigate = useNavigate();

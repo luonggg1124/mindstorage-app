@@ -7,6 +7,8 @@ export const spaceKeys = {
   mySpaces: () => [...spaceKeys.all, "my-spaces"] as const,
   detail: (id: string) => [...spaceKeys.all, "detail", id] as const,
   mySpacesInfinite: (request: { q: string; size: number }) => [...spaceKeys.all, "my-spaces", "infinite", request] as const,
+  membersInfinite: (request: { id: string; q: string; size: number }) =>
+    [...spaceKeys.all, "members", "infinite", request] as const,
 };
 
 export const useMySpaces = () => {
@@ -168,6 +170,99 @@ export const useMySpacesInfinite = (
     refetch: query.refetch,
     invalidate: () => {
       queryClient.invalidateQueries({ queryKey: spaceKeys.mySpacesInfinite(queryKey) });
+    },
+  };
+};
+
+export type UseSpaceMembersInfiniteRequest = {
+  params: { id?: string | null };
+  query?: {
+    q?: string;
+    size?: number;
+  };
+};
+
+/**
+ * Backend paging is 0-based by default (page=0).
+ */
+export const useSpaceMembersInfinite = (
+  request: UseSpaceMembersInfiniteRequest = {
+    params: { id: null },
+    query: { q: "", size: 10 },
+  }
+) => {
+  const { accessToken, hasHydrated } = useAuth();
+  const queryClient = useQueryClient();
+
+  const spaceId = (request.params.id ?? "").trim();
+  const normalizedQ = (request.query?.q ?? "").trim();
+  const size = Number(request.query?.size ?? 10);
+
+  const queryKey = {
+    id: spaceId,
+    q: normalizedQ,
+    size: Number.isFinite(size) && size > 0 ? size : 10,
+  };
+
+  const enabled = hasHydrated && !!accessToken && spaceId.length > 0;
+
+  const query = useInfiniteQuery({
+    queryKey: spaceKeys.membersInfinite(queryKey),
+    queryFn: async ({ pageParam = 0 }) => {
+      const response = await SpaceSDK.members({
+        params: { id: spaceId },
+        query: {
+          q: normalizedQ || undefined,
+          page: pageParam as number,
+          size: queryKey.size,
+        },
+      });
+      if (response.error) {
+        throw new Error(response.error?.message || "Lỗi khi lấy danh sách thành viên");
+      }
+      const payload = response.data;
+      if (!payload) {
+        throw new Error("Không có dữ liệu");
+      }
+      return payload;
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || !Array.isArray(lastPage.data)) return undefined;
+
+      const pageSize = Number(lastPage.size ?? queryKey.size ?? lastPage.data.length ?? 0);
+      const total = Number(lastPage.total ?? 0);
+      const currentLength = lastPage.data.length;
+
+      if (!Number.isFinite(pageSize) || pageSize <= 0) return undefined;
+
+      const loadedCount = allPages.reduce((sum, p) => sum + (Array.isArray(p?.data) ? p.data.length : 0), 0);
+      if (total > 0 && loadedCount >= total) return undefined;
+      if (currentLength < pageSize) return undefined;
+
+      const currentPage = Number(lastPage.page ?? 0);
+      return currentPage + 1;
+    },
+    initialPageParam: 0,
+    enabled,
+  });
+
+  const allData = query.data?.pages.flatMap((p) => p.data ?? []) ?? [];
+  const total = Number(query.data?.pages?.[0]?.total ?? 0);
+
+  return {
+    enabled,
+    loading: query.isLoading,
+    fetching: query.isFetching,
+    fetchingNextPage: query.isFetchingNextPage,
+    data: allData,
+    pages: query.data?.pages ?? [],
+    total,
+    error: query.error,
+    hasNextPage: query.hasNextPage,
+    fetchNextPage: query.fetchNextPage,
+    refetch: query.refetch,
+    invalidate: () => {
+      queryClient.invalidateQueries({ queryKey: spaceKeys.membersInfinite(queryKey) });
     },
   };
 };
