@@ -6,6 +6,8 @@ import { useAcceptInvitation, useRejectInvitation } from "@/data/api/invitation"
 import {
   isInviteNotificationType,
   parseNotificationData,
+  useReadAllNotifications,
+  useReadOneNotification,
   useMyNotificationsInfinite,
   useNotification,
   useUnreadNotificationCount,
@@ -22,6 +24,9 @@ export function SidebarNotifications({ open, onOpenChange, onUnreadCountChange }
   const { unreadCount } = useNotification();
   const acceptInvitation = useAcceptInvitation();
   const rejectInvitation = useRejectInvitation();
+  const readAll = useReadAllNotifications();
+  const readOne = useReadOneNotification();
+  const [readingId, setReadingId] = React.useState<string | null>(null);
 
   const notificationsInfinite = useMyNotificationsInfinite({
     query: { q: "", size: 10 },
@@ -42,15 +47,26 @@ export function SidebarNotifications({ open, onOpenChange, onUnreadCountChange }
         <SheetHeader>
           <div className="flex items-center justify-between gap-3">
             <SheetTitle className="text-slate-100">Thông báo</SheetTitle>
-            <button
-              type="button"
-              onClick={() => notificationsInfinite.refetch()}
-              className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-200 transition hover:bg-white/10 disabled:opacity-50"
-              disabled={notificationsInfinite.fetching}
-              title="Tải lại thông báo"
-            >
-              Làm mới
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => notificationsInfinite.refetch()}
+                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-200 transition hover:bg-white/10 disabled:opacity-50"
+                disabled={notificationsInfinite.fetching}
+                title="Tải lại thông báo"
+              >
+                Làm mới
+              </button>
+              <button
+                type="button"
+                onClick={() => readAll.mutate()}
+                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-200 transition hover:bg-white/10 disabled:opacity-50"
+                disabled={unreadCount === 0 || readAll.isPending}
+                title="Đánh dấu tất cả là đã đọc"
+              >
+                Đã đọc tất cả
+              </button>
+            </div>
           </div>
         </SheetHeader>
 
@@ -88,25 +104,58 @@ export function SidebarNotifications({ open, onOpenChange, onUnreadCountChange }
             const canAct = isInvite && Boolean(invitationId);
 
             const busy = acceptInvitation.isPending || rejectInvitation.isPending;
+            const readingThis = readingId === n.id;
 
             return (
-              <div key={n.id} className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-left">
+              <div
+                key={n.id}
+                className={[
+                  "w-full rounded-xl border p-3 text-left transition",
+                  n.read
+                    ? "border-white/10 bg-white/3 opacity-70"
+                    : "border-indigo-400/25 bg-indigo-500/10",
+                  readingThis ? "pointer-events-none opacity-60" : null,
+                ].join(" ")}
+              >
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
+                    if (!n.read) {
+                      setReadingId(n.id);
+                      try {
+                        await readOne.mutateAsync({ id: n.id });
+                      } finally {
+                        setReadingId((prev) => (prev === n.id ? null : prev));
+                      }
+                    }
                     if (!isInvite) onOpenChange(false);
                   }}
                   className="block w-full text-left transition hover:opacity-95"
+                  disabled={readingThis}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        {!n.isRead ? <span className="mt-0.5 size-2 rounded-full bg-indigo-400" /> : null}
-                        <p className="truncate text-sm font-semibold text-slate-100">{n.title}</p>
+                        {!n.read ? <span className="mt-0.5 size-2 rounded-full bg-indigo-400" /> : null}
+                        <p
+                          className={[
+                            "truncate text-sm font-semibold",
+                            n.read ? "text-slate-200/80" : "text-slate-100",
+                          ].join(" ")}
+                        >
+                          {n.title}
+                        </p>
                       </div>
-                      <p className="mt-1 line-clamp-2 text-xs text-slate-300/75">{n.content}</p>
+                      <p
+                        className={[
+                          "mt-1 line-clamp-2 text-xs",
+                          n.read ? "text-slate-300/55" : "text-slate-300/75",
+                        ].join(" ")}
+                      >
+                        {n.content}
+                      </p>
                       {isInvite ? (
-                        <div className="mt-2 text-xs text-slate-300/70">
+                        <div className={["mt-2 text-xs", n.read ? "text-slate-300/55" : "text-slate-300/70"].join(" ")}>
                           {inviteMeta?.senderName ? (
                             <span>
                               Từ <span className="text-slate-100">{inviteMeta.senderName}</span>
@@ -124,7 +173,9 @@ export function SidebarNotifications({ open, onOpenChange, onUnreadCountChange }
                         </div>
                       ) : null}
                     </div>
-                    <span className="shrink-0 text-[11px] text-slate-300/70">{createdText}</span>
+                    <span className={["shrink-0 text-[11px]", n.read ? "text-slate-300/50" : "text-slate-300/70"].join(" ")}>
+                      {createdText}
+                    </span>
                   </div>
                 </button>
 
@@ -138,7 +189,7 @@ export function SidebarNotifications({ open, onOpenChange, onUnreadCountChange }
                         notificationsInfinite.invalidate();
                       }}
                       className="inline-flex flex-1 items-center justify-center rounded-full bg-indigo-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-400 disabled:opacity-50"
-                      disabled={!canAct || busy}
+                      disabled={!canAct || busy || readingThis}
                       title={!invitationId ? "Thiếu invitationId trong data" : "Chấp nhận"}
                     >
                       Chấp nhận
@@ -151,7 +202,7 @@ export function SidebarNotifications({ open, onOpenChange, onUnreadCountChange }
                         notificationsInfinite.invalidate();
                       }}
                       className="inline-flex flex-1 items-center justify-center rounded-full border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/10 disabled:opacity-50"
-                      disabled={!canAct || busy}
+                      disabled={!canAct || busy || readingThis}
                       title={!invitationId ? "Thiếu invitationId trong data" : "Từ chối"}
                     >
                       Từ chối

@@ -8,7 +8,7 @@ export interface IMyNotificationDto {
   content: string;
   type: NotificationTypeDto;
   data: string | null; // JSON string
-  isRead: boolean;
+  read: boolean;
   readAt: string | null;
   createdAt: string; // ISO string
 }

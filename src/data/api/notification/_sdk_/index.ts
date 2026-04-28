@@ -20,6 +20,28 @@ export class NotificationSDK {
     });
     return response;
   }
+
+  static async readAll<ThrowOnError extends boolean = false>() {
+    const response = await client.patch<
+      { 201 : { success: boolean } },
+      { [key: number]: { message: string; status: number } },
+      ThrowOnError
+    >({
+      url: apiPaths.notification.readAll.path,
+    });
+    return response;
+  }
+
+  static async readOne<ThrowOnError extends boolean = false>(request: { params: { id: string } }) {
+    const response = await client.patch<
+      { 201: { success: boolean } },
+      { [key: number]: { message: string; status: number } },
+      ThrowOnError
+    >({
+      url: apiPaths.notification.readOne.getPath(request.params.id),
+    });
+    return response;
+  }
 }
 
 export type * from "./my-notifications.type";

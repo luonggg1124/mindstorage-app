@@ -9,6 +9,13 @@ const notificationPaths = {
   unreadCount: {
     path: "/api/notification/unread-count",
   },
+  readAll: {
+    path: "/api/notification/read-all",
+  },
+  readOne: {
+    path: "/api/notification/{id}/read",
+    getPath: (id: string | number) => `/api/notification/${id}/read`,
+  },
 };
 
 export default notificationPaths;

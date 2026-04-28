@@ -6,6 +6,8 @@ import routes from "./routes";
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { ThemeProvider } from "next-themes";
+import { Toaster } from "@/components/ui/sonner";
 function App() {
   //const [greetMsg, setGreetMsg] = useState("");
   //const [name, setName] = useState("");
@@ -29,10 +31,15 @@ function App() {
         },
       })
   );
-  return <QueryClientProvider client={queryClient}>
-    <RouterProvider router={routes} />
-    <ReactQueryDevtools initialIsOpen={false} />
-  </QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <RouterProvider router={routes} />
+        <Toaster />
+      </ThemeProvider>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+  );
 }
 
 export default App;

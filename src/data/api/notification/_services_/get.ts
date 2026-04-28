@@ -184,16 +184,15 @@ export const useNotificationSocket = () => {
                     (message) => {
                         const notification = JSON.parse(message.body) as INotification;
                         toast.info(notification.title, {
+                          
                             description: notification.content,
-                            position: "bottom-right"
+                            position: "bottom-right",
+                            duration: 5000,
+                            className:
+                              "animate-in slide-in-from-right-4 fade-in-0 rounded-[14px] px-4 py-3 text-[14px] leading-snug min-w-[360px] max-w-[460px] shadow-2xl",
                         });
-                        queryClient.setQueryData(
-                            [notificationKeys.all],
-                            (old: any[] = []) => [
-                                notification,
-                                ...old
-                            ]
-                        )
+                        queryClient.invalidateQueries({ queryKey: myNotificationsKeys.all });
+                        queryClient.invalidateQueries({ queryKey: notificationKeys.all });
                         incrementUnread();
                     }
                 );
