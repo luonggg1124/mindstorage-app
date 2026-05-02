@@ -16,11 +16,3 @@ export type UpdateSpaceResponse = {
   };
 };
 
-export type UpdateSpaceError = {
-  [key: number]: {
-    message: string;
-    status: number;
-    field?: string;
-  };
-};
-

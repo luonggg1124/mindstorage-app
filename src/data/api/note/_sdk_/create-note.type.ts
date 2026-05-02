@@ -17,11 +17,3 @@ export type CreateNoteResponse = {
   };
 };
 
-export type CreateNoteError = {
-  [key: number]: {
-    message: string;
-    status: number;
-    field?: string;
-  };
-};
-

@@ -18,11 +18,3 @@ export type UpdateTopicResponse = {
   };
 };
 
-export type UpdateTopicError = {
-  [key: number]: {
-    message: string;
-    status: number;
-    field?: string;
-  };
-};
-

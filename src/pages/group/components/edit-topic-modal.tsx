@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 
 import LoadingDots from "@/components/animate/loading-dots";
 import {
@@ -15,7 +15,7 @@ type EditTopicModalProps = {
   onOpenChange: (open: boolean) => void;
   value: { name: string };
   onChange: (next: { name: string }) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
   isPending?: boolean;
   errorMessage?: string;
 };

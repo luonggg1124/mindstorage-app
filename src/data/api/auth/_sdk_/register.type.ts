@@ -22,10 +22,3 @@ export type RegisterResponse = {
   };
 };
 
-export type RegisterError = {
-  [key: number]: {
-    message: string;
-    status: number;
-    field?: string;
-  };
-};

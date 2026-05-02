@@ -1,57 +1,76 @@
-import { client } from "@/data/client.config";
+import { client, safeRequest } from "@/data/client.config";
+import type { ApiError } from "@/data/types";
 import apiPaths from "@/paths/api";
-import type { MySpacesError, MySpacesRequest, MySpacesResponse } from "./my-spaces.type";
-import type { CreateSpaceError, CreateSpaceRequest, CreateSpaceResponse } from "./create-space.type";
-import type { SpaceDetailError, SpaceDetailRequest, SpaceDetailResponse } from "./detail-space.type";
-import type { UpdateSpaceError, UpdateSpaceRequest, UpdateSpaceResponse } from "./update-space.type";
-import type { DeleteSpaceError, DeleteSpaceRequest, DeleteSpaceResponse } from "./delete-space.type";
-import type { SpaceMembersError, SpaceMembersRequest, SpaceMembersResponse } from "./members.type";
+import type { MySpacesRequest, MySpacesResponse } from "./my-spaces.type";
+import type { CreateSpaceRequest, CreateSpaceResponse } from "./create-space.type";
+import type { SpaceDetailRequest, SpaceDetailResponse } from "./detail-space.type";
+import type { UpdateSpaceRequest, UpdateSpaceResponse } from "./update-space.type";
+import type { DeleteSpaceRequest, DeleteSpaceResponse } from "./delete-space.type";
+import type { SpaceMembersRequest, SpaceMembersResponse } from "./members.type";
 
 
 export class SpaceSDK {
 
 
-    static async mySpaces<ThrowOnError extends boolean = false>(request: MySpacesRequest) {
-        const response = await client.get<MySpacesResponse, MySpacesError, ThrowOnError>({
-            url: apiPaths.space.mySpaces.getPath(request.query),
-        });
+    static async mySpaces(request: MySpacesRequest) {
+        const response = await safeRequest(() =>
+            client.get<MySpacesResponse, ApiError, true>({
+                url: apiPaths.space.mySpaces.getPath(request.query),
+                throwOnError: true,
+            })
+        );
         return response;
     }
 
-    static async detail<ThrowOnError extends boolean = false>(request: SpaceDetailRequest) {
-        const response = await client.get<SpaceDetailResponse, SpaceDetailError, ThrowOnError>({
-            url: apiPaths.space.detail.getPath(request.id),
-        });
+    static async detail(request: SpaceDetailRequest) {
+        const response = await safeRequest(() =>
+            client.get<SpaceDetailResponse, ApiError, true>({
+                url: apiPaths.space.detail.getPath(request.id),
+                throwOnError: true,
+            })
+        );
         return response;
     }
 
-    static async members<ThrowOnError extends boolean = false>(request: SpaceMembersRequest) {
-        const response = await client.get<SpaceMembersResponse, SpaceMembersError, ThrowOnError>({
-            url: apiPaths.space.members.getPath(request.params.id, request.query),
-        });
+    static async members(request: SpaceMembersRequest) {
+        const response = await safeRequest(() =>
+            client.get<SpaceMembersResponse, ApiError, true>({
+                url: apiPaths.space.members.getPath(request.params.id, request.query),
+                throwOnError: true,
+            })
+        );
         return response;
     }
 
-    static async create<ThrowOnError extends boolean = false>(request: CreateSpaceRequest) {
-        const response = await client.post<CreateSpaceResponse, CreateSpaceError, ThrowOnError>({
-            url: apiPaths.space.create.path,
-            body: request.body,
-        });
+    static async create(request: CreateSpaceRequest) {
+        const response = await safeRequest(() =>
+            client.post<CreateSpaceResponse, ApiError, true>({
+                url: apiPaths.space.create.path,
+                body: request.body,
+                throwOnError: true
+            })
+        );
         return response;
     }
 
-    static async update<ThrowOnError extends boolean = false>(request: UpdateSpaceRequest) {
-        const response = await client.put<UpdateSpaceResponse, UpdateSpaceError, ThrowOnError>({
-            url: apiPaths.space.update.getPath(request.id),
-            body: request.body,
-        });
+    static async update(request: UpdateSpaceRequest) {
+        const response = await safeRequest(() =>
+            client.put<UpdateSpaceResponse, ApiError, true>({
+                url: apiPaths.space.update.getPath(request.id),
+                body: request.body,
+                throwOnError: true,
+            })
+        );
         return response;
     }
 
-    static async delete<ThrowOnError extends boolean = false>(request: DeleteSpaceRequest) {
-        const response = await client.delete<DeleteSpaceResponse, DeleteSpaceError, ThrowOnError>({
-            url: apiPaths.space.delete.getPath(request.params.id),
-        });
+    static async delete(request: DeleteSpaceRequest) {
+        const response = await safeRequest(() =>
+            client.delete<DeleteSpaceResponse, ApiError, true>({
+                url: apiPaths.space.delete.getPath(request.params.id),
+                throwOnError: true,
+            })
+        );
         return response;
     }
  

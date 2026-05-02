@@ -13,6 +13,7 @@ import {
   useUnreadNotificationCount,
 } from "@/data/api/notification";
 import { getRelativeTime } from "@/utils/date";
+import { InvitationStatus } from "@/data/models/invitation";
 
 type SidebarNotificationsProps = {
   open: boolean;
@@ -100,8 +101,11 @@ export function SidebarNotifications({ open, onOpenChange, onUnreadCountChange }
             const isInvite = isInviteNotificationType(n.type);
             const inviteMeta = isInvite ? parseNotificationData(n.data) : null;
             const invitationId = inviteMeta?.invitationId?.trim();
+            const invitationStatus = (inviteMeta?.invitationStatus ?? "").toUpperCase();
+            const canShowInviteActions =
+              invitationStatus.length > 0 && invitationStatus === InvitationStatus.PENDING;
 
-            const canAct = isInvite && Boolean(invitationId);
+            const canAct = isInvite && canShowInviteActions && Boolean(invitationId);
 
             const busy = acceptInvitation.isPending || rejectInvitation.isPending;
             const readingThis = readingId === n.id;
@@ -179,7 +183,7 @@ export function SidebarNotifications({ open, onOpenChange, onUnreadCountChange }
                   </div>
                 </button>
 
-                {isInvite ? (
+                {isInvite && canShowInviteActions ? (
                   <div className="mt-3 flex gap-2">
                     <button
                       type="button"

@@ -16,10 +16,3 @@ export type LoginResponse = {
   };
 };
 
-export type LoginError = {
-  [key: number]: {
-    message: string;
-    status: number;
-    field?: string;
-  };
-};

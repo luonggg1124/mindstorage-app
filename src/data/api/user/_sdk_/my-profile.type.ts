@@ -6,10 +6,5 @@ export type MyProfileResponse = {
   200: IMyProfileDto;
 };
 
-export type MyProfileError = {
-  [key: number]: {
-    message: string;
-    status: number;
-  };
-};
+
 

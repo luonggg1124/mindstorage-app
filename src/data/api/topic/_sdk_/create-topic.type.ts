@@ -15,10 +15,4 @@ export type CreateTopicResponse = {
   };
 };
 
-export type CreateTopicError = {
-  [key: number]: {
-    message: string;
-    status: number;
-    field?: string;
-  };
-};
+

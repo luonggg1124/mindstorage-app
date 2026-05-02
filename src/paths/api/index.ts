@@ -7,6 +7,9 @@ import notePaths from "./note";
 import utilsPaths from "./utils";
 import invitationPaths from "./invitation";
 import notificationPaths from "./notification";
+import statisticsPaths from "./statistics";
+import suggestionsPaths from "./suggestions";
+import attachmentPaths from "./attachment";
 
 const apiPaths = {
     auth: authPaths,
@@ -18,6 +21,9 @@ const apiPaths = {
     utils: utilsPaths,
     invitation: invitationPaths,
     notification: notificationPaths,
+    statistics: statisticsPaths,
+    suggestions: suggestionsPaths,
+    attachment: attachmentPaths
 }
 
 export default apiPaths;

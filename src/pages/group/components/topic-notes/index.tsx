@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { SubmitEvent, useMemo, useState } from "react";
 
 import {
   Dialog,
@@ -17,7 +17,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import type { INoteByTopicDto } from "@/data/api/note";
 import { useCreateNote, useDeleteNote, useNotesByParentInfinite, useNotesByTopicInfinite, useUpdateNote } from "@/data/api/note";
 import { toast } from "@/lib/toast";
-import { sanitizeHtml } from "@/lib/dompurify";
+import { sanitizeHtml, sanitizeText } from "@/lib/dompurify";
 
 import { ChildNoteDetailModal } from "./child-note-detail-modal";
 import { CreateChildNoteModal } from "./create-child-note-modal";
@@ -28,6 +28,11 @@ function safeInitials(value: string) {
   const trimmed = (value ?? "").trim();
   if (!trimmed) return "U";
   return trimmed[0]?.toUpperCase() ?? "U";
+}
+
+/** Preview danh sách: chỉ text, bỏ ảnh/HTML; gom khoảng trắng. */
+function noteListExcerpt(html: string, maxLen = 320): string {
+  return sanitizeText(html ?? "", maxLen).replace(/\s+/g, " ").trim();
 }
 
 type TopicNotesProps = {
@@ -75,7 +80,7 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
     query: { page: 1, size: 12 },
   });
 
-  const handleCreate = (event: FormEvent<HTMLFormElement>) => {
+  const handleCreate = (event:  SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     const title = draft.title.trim();
     if (!title) return;
@@ -89,7 +94,7 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
         parentId: null,
       })
       .then((res) => {
-        if (res.error) return;
+        if (res.response.status >= 400) return;
         setDraft({ title: "", summary: "" });
         setIsCreateOpen(false);
         notesInfinite.invalidate();
@@ -123,7 +128,7 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
         topicId: activeTopicId,
       })
       .then((res) => {
-        if (res.error) return;
+        if (res.response.status >= 400) return;
         setIsEditOpen(false);
         notesInfinite.invalidate();
       })
@@ -137,7 +142,7 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
     deleteNote
       .mutateAsync({ id: deleteTarget.id })
       .then((res) => {
-        if (res.error) return;
+        if (res.response.status >= 400) return;
         setDeleteTarget(null);
         setSelectedId(null);
         setSelectedChild(null);
@@ -148,7 +153,7 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
       });
   };
 
-  const handleCreateChild = (event: FormEvent<HTMLFormElement>) => {
+  const handleCreateChild = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     const title = childDraft.title.trim();
     if (!title) return;
@@ -163,7 +168,7 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
         parentId: selected.id,
       })
       .then((res) => {
-        if (res.error) return;
+        if (res.response.status >= 400) return;
         setChildDraft({ title: "", summary: "" });
         setIsAddChildOpen(false);
         notesInfinite.invalidate();
@@ -242,44 +247,44 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
             }
           >
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {notes.map((n) => (
-                <button
-                  key={n.id}
-                  type="button"
-                  onClick={() => openNoteDetail(n)}
-                  className="text-left rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur transition hover:border-white/20 hover:bg-white/[0.07]"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="min-w-0 truncate font-semibold text-slate-100">{n.title}</p>
-                    <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-300/80">
-                      {formatRelative(n.updatedAt, "—")}
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-center gap-2 text-xs text-slate-300/80">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="inline-flex items-center gap-2">
-                            <Avatar size="sm">
-                              {n.creator.avatarUrl ? <AvatarImage src={n.creator.avatarUrl} alt={n.creator.username} /> : null}
-                              <AvatarFallback>{safeInitials(n.creator.username)}</AvatarFallback>
-                            </Avatar>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent sideOffset={6}>@{n.creator.username}</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  {sanitizeHtml(n.content) ? (
-                    <div
-                      className="prose prose-invert mt-2 line-clamp-3 max-w-none text-sm text-slate-300/85 prose-p:my-1 prose-a:text-sky-300"
-                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(n.content) }}
-                    />
-                  ) : (
-                    <p className="mt-2 line-clamp-3 text-sm text-slate-300/85">—</p>
-                  )}
-                </button>
-              ))}
+              {notes.map((n) => {
+                const excerpt = noteListExcerpt(n.content);
+                return (
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={() => openNoteDetail(n)}
+                    className="text-left rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur transition hover:border-white/20 hover:bg-white/[0.07]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="min-w-0 truncate font-semibold text-slate-100">{n.title}</p>
+                      <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-300/80">
+                        {formatRelative(n.updatedAt, "—")}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2 text-xs text-slate-300/80">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="inline-flex items-center gap-2">
+                              <Avatar size="sm">
+                                {n.creator.avatarUrl ? <AvatarImage src={n.creator.avatarUrl} alt={n.creator.username} /> : null}
+                                <AvatarFallback>{safeInitials(n.creator.username)}</AvatarFallback>
+                              </Avatar>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent sideOffset={6}>@{n.creator.username}</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    {excerpt ? (
+                      <p className="mt-2 line-clamp-3 text-sm text-slate-300/85">{excerpt}</p>
+                    ) : (
+                      <p className="mt-2 line-clamp-3 text-sm text-slate-300/85">—</p>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {notesInfinite.fetchingNextPage ? (
@@ -337,7 +342,7 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
               >
                 Hủy
               </button>
-              {createNote.error?.message ? (
+              {createNote?.error?.message ? (
                 <div className="mr-auto rounded-lg border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
                   {createNote.error.message}
                 </div>
@@ -471,7 +476,9 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
                     }
                   >
                     <div className="grid gap-3 sm:grid-cols-2">
-                      {childNotesInfinite.data.map((c) => (
+                      {childNotesInfinite.data.map((c) => {
+                        const childExcerpt = noteListExcerpt(c.content, 200);
+                        return (
                         <button
                           key={c.id}
                           type="button"
@@ -481,11 +488,8 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                               <p className="truncate text-sm font-semibold text-slate-100">{c.title}</p>
-                              {sanitizeHtml(c.content) ? (
-                                <div
-                                  className="prose prose-invert mt-1 line-clamp-2 max-w-none text-xs text-slate-300/80 prose-p:my-1 prose-a:text-sky-300"
-                                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(c.content) }}
-                                />
+                              {childExcerpt ? (
+                                <p className="mt-1 line-clamp-2 text-xs text-slate-300/80">{childExcerpt}</p>
                               ) : (
                                 <p className="mt-1 line-clamp-2 text-xs text-slate-300/80">—</p>
                               )}
@@ -512,7 +516,8 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
                             </div>
                           </div>
                         </button>
-                      ))}
+                        );
+                      })}
                     </div>
                   </ScrollInfinite>
                 ) : (
@@ -553,16 +558,7 @@ const TopicNotes = ({ activeTopicId, activeTopicName }: TopicNotesProps) => {
         onOpenChange={(open) => (!open ? setSelectedChild(null) : null)}
         note={
           selectedChild
-            ? {
-                id: selectedChild.id,
-                title: selectedChild.title,
-                content: selectedChild.content,
-                updatedAt: selectedChild.updatedAt,
-                creator: {
-                  username: selectedChild.creator.username,
-                  avatarUrl: selectedChild.creator.avatarUrl,
-                },
-              }
+            ? selectedChild
             : null
         }
         safeInitials={safeInitials}

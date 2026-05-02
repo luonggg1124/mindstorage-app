@@ -9,22 +9,22 @@ import { INotification } from "@/data/models/notification";
 import type { IInviteNotificationDataDto, IMyNotificationDto, NotificationTypeDto } from "../_dto_";
 import { NotificationSDK } from "../_sdk_";
 type NotificationStore = {
-    unreadCount: number;
-    setUnreadCount: (count: number) => void;
-    incrementUnread: () => void;
+  unreadCount: number;
+  setUnreadCount: (count: number) => void;
+  incrementUnread: () => void;
 }
 export const useNotificationStore = create<NotificationStore>((set) => (
-    {
-        unreadCount: 0,
-        setUnreadCount: (count: number) => set({ unreadCount: count }),
-        incrementUnread: () => set((state: { unreadCount: number }) => ({ unreadCount: state.unreadCount + 1 })),
-    }
+  {
+    unreadCount: 0,
+    setUnreadCount: (count: number) => set({ unreadCount: count }),
+    incrementUnread: () => set((state: { unreadCount: number }) => ({ unreadCount: state.unreadCount + 1 })),
+  }
 ));
 
 export const notificationKeys = {
-    all: ["notifications"] as const,
-    list: () => [...notificationKeys.all, "list"] as const,
-    unreadCount: () => [...notificationKeys.all, "unread-count"] as const,
+  all: ["notifications"] as const,
+  list: () => [...notificationKeys.all, "list"] as const,
+  unreadCount: () => [...notificationKeys.all, "unread-count"] as const,
 }
 
 export const myNotificationsKeys = {
@@ -81,9 +81,6 @@ export const useMyNotificationsInfinite = (
           size: queryKey.size,
         },
       });
-      if (response.error) {
-        throw new Error(response.error?.message || "Lỗi khi lấy thông báo");
-      }
       const payload = response.data;
       if (!payload) {
         throw new Error("Không có dữ liệu");
@@ -137,9 +134,6 @@ export const useUnreadNotificationCount = () => {
     queryKey: notificationKeys.unreadCount(),
     queryFn: async () => {
       const response = await NotificationSDK.unreadCount();
-      if (response.error) {
-        throw new Error(response.error?.message || "Lỗi khi lấy số thông báo chưa đọc");
-      }
       const payload = response.data;
       if (payload == null) {
         throw new Error("Không có dữ liệu");
@@ -164,57 +158,9 @@ export const useUnreadNotificationCount = () => {
   };
 };
 
-export const useNotificationSocket = () => {
-    const { accessToken } = useAuth();
-    
-    const queryClient = useQueryClient();
-    const { setUnreadCount, incrementUnread } = useNotificationStore();
-    useEffect(() => {
-        if (!accessToken) return () => {};
-        const client = new Client({
-            brokerURL: import.meta.env.VITE_WS_URL,
-            connectHeaders: {
-                Authorization: `Bearer ${accessToken}`,
-            },
-            heartbeatIncoming: 4000,
-            heartbeatOutgoing: 4000,
-            onConnect: () => {
-                client.subscribe(
-                    "/user/queue/notifications",
-                    (message) => {
-                        const notification = JSON.parse(message.body) as INotification;
-                        toast.info(notification.title, {
-                          
-                            description: notification.content,
-                            position: "bottom-right",
-                            duration: 5000,
-                            className:
-                              "animate-in slide-in-from-right-4 fade-in-0 rounded-[14px] px-4 py-3 text-[14px] leading-snug min-w-[360px] max-w-[460px] shadow-2xl",
-                        });
-                        queryClient.invalidateQueries({ queryKey: myNotificationsKeys.all });
-                        queryClient.invalidateQueries({ queryKey: notificationKeys.all });
-                        incrementUnread();
-                    }
-                );
-                client.subscribe(
-                    "/user/queue/notifications/count",
-                    (message) => {
-                        const count = JSON.parse(message.body) as number;
-                        setUnreadCount(count);
-                    }
-                )
 
-            },
-            onStompError: (frame) => {
-                console.error("Stomp error:", frame);
-            }
-        });
-        client.activate();
-        return () => client.deactivate();
-    }, [accessToken, queryClient, incrementUnread, setUnreadCount]);
-}
 
 export const useNotification = () => {
-    const { unreadCount, setUnreadCount, incrementUnread } = useNotificationStore();
-    return { unreadCount, setUnreadCount, incrementUnread };
+  const { unreadCount, setUnreadCount, incrementUnread } = useNotificationStore();
+  return { unreadCount, setUnreadCount, incrementUnread };
 }

@@ -1,45 +1,58 @@
-import { client } from "@/data/client.config";
+import { client, safeRequest } from "@/data/client.config";
+import type { ApiError } from "@/data/types";
 import apiPaths from "@/paths/api";
-import type { MyNotificationsError, MyNotificationsRequest, MyNotificationsResponse } from "./my-notifications.type";
+import type { MyNotificationsRequest, MyNotificationsResponse } from "./my-notifications.type";
 
 export class NotificationSDK {
-  static async myNotifications<ThrowOnError extends boolean = false>(request: MyNotificationsRequest) {
-    const response = await client.get<MyNotificationsResponse, MyNotificationsError, ThrowOnError>({
-      url: apiPaths.notification.myNotifications.getPath(request.query),
-    });
+  static async myNotifications(request: MyNotificationsRequest) {
+    const response = await safeRequest(() =>
+      client.get<MyNotificationsResponse, ApiError, true>({
+        url: apiPaths.notification.myNotifications.getPath(request.query),
+        throwOnError: true,
+      })
+    );
     return response;
   }
 
-  static async unreadCount<ThrowOnError extends boolean = false>() {
-    const response = await client.get<
-      { 200: number },
-      { [key: number]: { message: string; status: number } },
-      ThrowOnError
-    >({
-      url: apiPaths.notification.unreadCount.path,
-    });
+  static async unreadCount() {
+    const response = await safeRequest(() =>
+      client.get<
+        { 200: number },
+        ApiError,
+        true
+      >({
+        url: apiPaths.notification.unreadCount.path,
+        throwOnError: true,
+      })
+    );
     return response;
   }
 
-  static async readAll<ThrowOnError extends boolean = false>() {
-    const response = await client.patch<
-      { 201 : { success: boolean } },
-      { [key: number]: { message: string; status: number } },
-      ThrowOnError
-    >({
-      url: apiPaths.notification.readAll.path,
-    });
+  static async readAll() {
+    const response = await safeRequest(() =>
+      client.patch<
+        { 201: { success: boolean } },
+        ApiError,
+        true
+      >({
+        url: apiPaths.notification.readAll.path,
+        throwOnError: true,
+      })
+    );
     return response;
   }
 
-  static async readOne<ThrowOnError extends boolean = false>(request: { params: { id: string } }) {
-    const response = await client.patch<
-      { 201: { success: boolean } },
-      { [key: number]: { message: string; status: number } },
-      ThrowOnError
-    >({
-      url: apiPaths.notification.readOne.getPath(request.params.id),
-    });
+  static async readOne(request: { params: { id: string } }) {
+    const response = await safeRequest(() =>
+      client.patch<
+        { 201: { success: boolean } },
+        ApiError,
+        true
+      >({
+        url: apiPaths.notification.readOne.getPath(request.params.id),
+        throwOnError: true,
+      })
+    );
     return response;
   }
 }

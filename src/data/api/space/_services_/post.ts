@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { ApiErrorItem } from "@/data/types";
 import { SpaceSDK } from "../_sdk_";
 import { spaceKeys } from "./get";
 
@@ -25,7 +26,7 @@ export const useCreateSpace = () => {
     mutate: mutation.mutate,
     mutateAsync: mutation.mutateAsync,
     data: mutation.data?.data,
-    error: mutation.data?.error,
+    error: mutation.error as ApiErrorItem | undefined | null,
     isPending: mutation.isPending,
     isSuccess: mutation.isSuccess,
     isError: mutation.isError,
@@ -57,7 +58,7 @@ export const useUpdateSpace = () => {
     mutate: mutation.mutate,
     mutateAsync: mutation.mutateAsync,
     data: mutation.data?.data,
-    error: mutation.data?.error,
+    error: mutation.error as ApiErrorItem | undefined | null,
     isPending: mutation.isPending,
     isSuccess: mutation.isSuccess,
     isError: mutation.isError,

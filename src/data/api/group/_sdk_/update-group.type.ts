@@ -19,11 +19,3 @@ export type UpdateGroupResponse = {
   };
 };
 
-export type UpdateGroupError = {
-  [key: number]: {
-    message: string;
-    status: number;
-    field?: string;
-  };
-};
-

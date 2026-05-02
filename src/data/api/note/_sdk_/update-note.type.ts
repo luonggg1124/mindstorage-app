@@ -19,11 +19,3 @@ export type UpdateNoteResponse = {
   };
 };
 
-export type UpdateNoteError = {
-  [key: number]: {
-    message: string;
-    status: number;
-    field?: string;
-  };
-};
-

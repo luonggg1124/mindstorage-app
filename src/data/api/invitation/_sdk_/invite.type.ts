@@ -14,11 +14,3 @@ export type InviteResponse = {
   };
 };
 
-export type InviteError = {
-  [key: number]: {
-    message: string;
-    status: number;
-    field?: string;
-  };
-};
-

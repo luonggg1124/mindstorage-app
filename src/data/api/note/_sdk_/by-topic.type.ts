@@ -16,10 +16,3 @@ export type NotesByTopicResponse = {
   200: IPageResponse<INoteByTopicDto>;
 };
 
-export type NotesByTopicError = {
-  [key: number]: {
-    message: string;
-    status: number;
-  };
-};
-

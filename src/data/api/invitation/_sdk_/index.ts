@@ -1,29 +1,39 @@
-import { client } from "@/data/client.config";
+import { client, safeRequest } from "@/data/client.config";
+import type { ApiError } from "@/data/types";
 import apiPaths from "@/paths/api";
-import type { InviteError, InviteRequest, InviteResponse } from "./invite.type";
-import type { AcceptInvitationError, AcceptInvitationRequest, AcceptInvitationResponse } from "./accept.type";
-import type { RejectInvitationError, RejectInvitationRequest, RejectInvitationResponse } from "./reject.type";
+import type { InviteRequest, InviteResponse } from "./invite.type";
+import type { AcceptInvitationRequest, AcceptInvitationResponse } from "./accept.type";
+import type { RejectInvitationRequest, RejectInvitationResponse } from "./reject.type";
 
 export class InvitationSDK {
-  static async invite<ThrowOnError extends boolean = false>(request: InviteRequest) {
-    const response = await client.post<InviteResponse, InviteError, ThrowOnError>({
-      url: apiPaths.invitation.invite.path,
-      body: request.body,
-    });
+  static async invite(request: InviteRequest) {
+    const response = await safeRequest(() =>
+      client.post<InviteResponse, ApiError, true>({
+        url: apiPaths.invitation.invite.path,
+        body: request.body,
+        throwOnError: true,
+      })
+    );
     return response;
   }
 
-  static async accept<ThrowOnError extends boolean = false>(request: AcceptInvitationRequest) {
-    const response = await client.post<AcceptInvitationResponse, AcceptInvitationError, ThrowOnError>({
-      url: apiPaths.invitation.accept.getPath(request.params.id),
-    });
+  static async accept(request: AcceptInvitationRequest) {
+    const response = await safeRequest(() =>
+      client.post<AcceptInvitationResponse, ApiError, true>({
+        url: apiPaths.invitation.accept.getPath(request.params.id),
+        throwOnError: true,
+      })
+    );
     return response;
   }
 
-  static async reject<ThrowOnError extends boolean = false>(request: RejectInvitationRequest) {
-    const response = await client.post<RejectInvitationResponse, RejectInvitationError, ThrowOnError>({
-      url: apiPaths.invitation.reject.getPath(request.params.id),
-    });
+  static async reject(request: RejectInvitationRequest) {
+    const response = await safeRequest(() =>
+      client.post<RejectInvitationResponse, ApiError, true>({
+        url: apiPaths.invitation.reject.getPath(request.params.id),
+        throwOnError: true,
+      })
+    );
     return response;
   }
 }

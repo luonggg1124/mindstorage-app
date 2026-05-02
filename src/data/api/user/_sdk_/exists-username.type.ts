@@ -12,10 +12,3 @@ export type ExistsUsernameResponse = {
     }
 }
 
-export type ExistsUsernameError = {
-    [key: number]: {
-        message: string;
-        status: number;
-        field?: string;
-    }
-}

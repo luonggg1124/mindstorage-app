@@ -1,40 +1,33 @@
 import { Link, useParams } from "react-router";
 
-import { findProfileById } from "./data";
 import clientPaths from "@/paths/client";
 import Chart from "@/components/custom/chart";
 import type { ApexOptions } from "apexcharts";
 
 const ProfilePage = () => {
   const { id } = useParams();
-  const profile = findProfileById(id);
 
-  if (!profile) {
-    return (
-      <section className="space-y-4">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm backdrop-blur">
-          <h1 className="text-2xl font-bold text-slate-100">Không tìm thấy hồ sơ</h1>
-          <p className="mt-2 text-sm text-slate-300/80">
-            Người dùng bạn đang tìm không tồn tại hoặc chưa được thêm vào dữ liệu mẫu.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link
-              to="/my-profile"
-              className="inline-flex rounded-full bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-400"
-            >
-              Quay lại hồ sơ của tôi
-            </Link>
-            <Link
-              to={clientPaths.space.list.getPath()}
-              className="inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10"
-            >
-              Đi đến spaces
-            </Link>
-          </div>
-        </div>
-      </section>
-    );
-  }
+  // Fake data tạm thời (không check tồn tại profile)
+  const profile = {
+    id: (id ?? "demo-user").trim() || "demo-user",
+    name: "Nguyễn Văn A",
+    role: "Frontend Developer",
+    major: "Công nghệ phần mềm",
+    location: "TP. Hồ Chí Minh",
+    email: "demo.user@utc.edu.vn",
+    bio: "Yêu thích xây dựng giao diện rõ ràng, responsive và dễ dùng cho các bài tập nhóm. React · TypeScript · TailwindCSS · UI/UX.",
+    skills: ["React", "TypeScript", "TailwindCSS", "UI/UX", "React Query", "Tauri"],
+    highlights: [
+      "Chia sẻ template mô tả group cho team.",
+      "Tối ưu cache/query keys để giảm gọi API trùng.",
+      "Thiết kế layout glass/dark đồng bộ toàn app.",
+    ],
+    stats: {
+      posts: 12,
+      followers: 48,
+      groups: 7,
+    },
+  } as const;
 
   const activitySeries = [
     {
@@ -165,16 +158,7 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          <article className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm backdrop-blur">
-            <h2 className="text-lg font-semibold text-slate-100">Hoạt động nổi bật</h2>
-            <ul className="mt-4 space-y-3 text-sm text-slate-200/90">
-              {profile.highlights.map((item) => (
-                <li key={item} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 leading-6">
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </article>
+          
         </div>
 
         <aside className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm backdrop-blur">

@@ -79,33 +79,37 @@ client.interceptors.request.use((request) => {
 
 
 let refreshPromise: Promise<any> | null = null;
-client.interceptors.response.use(async (response, request: any) => {
-  if (response.status !== 401) {
-    return response;
-  }
-  if (request.options?.headers?.['x-retried']) {
-    return response;
-  }
 
-  if (!refreshPromise) {
-    refreshPromise = refreshToken().finally(() => {
-      refreshPromise = null;
-    });
+
+export async function safeRequest<T extends Promise<any>>(
+  fn: () => T
+): Promise<Awaited<T>> {
+  try {
+    return await fn();
+  } catch (error: any) {
+   
+    
+    const status =
+      error?.response?.status ??
+      error?.status;
+
+    if (status !== 401) {
+      throw error;
+    }
+
+    if (!refreshPromise) {
+      refreshPromise = refreshToken().finally(() => {
+        refreshPromise = null;
+      });
+    }
+
+    const refreshed = await refreshPromise;
+
+    if (!refreshed) {
+      useAuthStore.getState().clear();
+      throw error;
+    }
+
+    return await fn();
   }
-
-  const data = await refreshPromise;
-  if (!data) {
-    useAuthStore.getState().clear();
-    return response;
-  }
-
-  const retried = await client.request({
-    ...request.options,
-    headers: {
-      ...request.options.headers,
-      "x-retried": "1",
-    },
-  });
-
-  return retried.response;
-})
+}

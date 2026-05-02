@@ -1,12 +1,16 @@
-import { client } from "@/data/client.config";
+import { client, safeRequest } from "@/data/client.config";
+import type { ApiError } from "@/data/types";
 import apiPaths from "@/paths/api";
-import type { GetWeatherError, GetWeatherRequest, GetWeatherResponse } from "./get-weather.type";
+import type { GetWeatherRequest, GetWeatherResponse } from "./get-weather.type";
 
 export class UtilsSDK {
-  static async weather<ThrowOnError extends boolean = false>(request: GetWeatherRequest) {
-    const response = await client.get<GetWeatherResponse, GetWeatherError, ThrowOnError>({
-      url: apiPaths.utils.weather.getPath(request.query),
-    });
+  static async weather(request: GetWeatherRequest) {
+    const response = await safeRequest(() =>
+      client.get<GetWeatherResponse, ApiError, true>({
+        url: apiPaths.utils.weather.getPath(request.query),
+        throwOnError: true,
+      })
+    );
     return response;
   }
 }

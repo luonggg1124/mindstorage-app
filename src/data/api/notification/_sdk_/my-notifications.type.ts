@@ -13,10 +13,3 @@ export type MyNotificationsResponse = {
   200: IPageResponse<IMyNotificationDto>;
 };
 
-export type MyNotificationsError = {
-  [key: number]: {
-    message: string;
-    status: number;
-  };
-};
-

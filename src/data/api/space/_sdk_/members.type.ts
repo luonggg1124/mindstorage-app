@@ -16,10 +16,3 @@ export type SpaceMembersResponse = {
   200: IPageResponse<ISpaceMemberUserDto>;
 };
 
-export type SpaceMembersError = {
-  [key: number]: {
-    message: string;
-    status: number;
-  };
-};
-

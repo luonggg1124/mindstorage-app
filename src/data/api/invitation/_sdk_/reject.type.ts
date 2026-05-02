@@ -10,10 +10,3 @@ export type RejectInvitationResponse = {
   };
 };
 
-export type RejectInvitationError = {
-  [key: number]: {
-    message: string;
-    status: number;
-  };
-};
-

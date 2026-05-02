@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 
 import Editor from "@/components/custom/editor";
 import {
@@ -27,7 +27,7 @@ export function CreateChildNoteModal({
   onChange: (next: { title: string; summary: string }) => void;
   isPending: boolean;
   errorMessage?: string;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

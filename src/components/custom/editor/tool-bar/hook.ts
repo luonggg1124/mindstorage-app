@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import type { Editor } from "@tiptap/react";
+import { useUploadAttachment } from "@/data/api/attachment";
 import { toast } from "@/lib/toast";
-// import { useUploadImage } from "@/client/@client/library";
 
 const SKELETON_SIZE = { width: 225, height: 225 };
 
@@ -11,8 +11,7 @@ const SKELETON_SIZE = { width: 225, height: 225 };
  * Hook xử lý chèn ảnh vào editor: upload file (có loading + skeleton) hoặc chèn URL.
  */
 export function useEditorUploadImage(editor: Editor | null) {
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  // const uploadImageMutation = useUploadImage();
+  const { upload, loading: isUploadingImage } = useUploadAttachment();
 
   const findNodePosByPlaceholderId = useCallback(
     (placeholderId: string): number | null => {
@@ -38,7 +37,6 @@ export function useEditorUploadImage(editor: Editor | null) {
 
       if (src instanceof File) {
         const placeholderId = `upload-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        setIsUploadingImage(true);
 
         editor
           .chain()
@@ -57,7 +55,8 @@ export function useEditorUploadImage(editor: Editor | null) {
           .run();
 
         try {
-          const fileUrl = "https://via.placeholder.com/225"; // await uploadImageMutation(src);
+          const created = await upload(src);
+          const fileUrl = created.fileUrl;
 
           const pos = findNodePosByPlaceholderId(placeholderId);
           if (pos !== null) {
@@ -77,8 +76,6 @@ export function useEditorUploadImage(editor: Editor | null) {
           const pos = findNodePosByPlaceholderId(placeholderId);
           if (pos !== null)
             editor.chain().focus().setNodeSelection(pos).deleteSelection().run();
-        } finally {
-          setIsUploadingImage(false);
         }
         return;
       }
@@ -94,7 +91,7 @@ export function useEditorUploadImage(editor: Editor | null) {
           .run();
       }
     },
-    [editor, findNodePosByPlaceholderId]
+    [editor, findNodePosByPlaceholderId, upload]
   );
 
   return { selectMediaImage, isUploadingImage };

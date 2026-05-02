@@ -11,10 +11,3 @@ export type GroupDetailResponse = {
   200: IDetailGroupDto;
 };
 
-export type GroupDetailError = {
-  [key: number]: {
-    message: string;
-    status: number;
-  };
-};
-

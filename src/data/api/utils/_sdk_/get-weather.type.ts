@@ -11,11 +11,3 @@ export type GetWeatherResponse = {
   200: IWeatherResponseDto;
 };
 
-export type GetWeatherError = {
-  [key: number]: {
-    message: string;
-    status: number;
-    field:string;
-  };
-};
-

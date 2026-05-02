@@ -15,11 +15,3 @@ export type CreateSpaceResponse = {
   };
 };
 
-export type CreateSpaceError = {
-  [key: number]: {
-    message: string;
-    status: number;
-    field?: string;
-  };
-};
-

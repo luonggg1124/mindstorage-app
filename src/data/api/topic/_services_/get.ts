@@ -16,10 +16,8 @@ export const useTopicsByGroup = (groupId?: string) => {
   const query = useQuery({
     queryKey: topicKeys.byGroup(queryKey),
     queryFn: async () => {
-      const { data, error } = await TopicSDK.byGroup({ params: { id: normalizedId } });
-      if (error) {
-        throw new Error(error?.message || "Lỗi khi lấy danh sách chủ đề");
-      }
+      const { data } = await TopicSDK.byGroup({ params: { id: normalizedId } });
+      
       return Array.isArray(data) ? data : [];
     },
     enabled,

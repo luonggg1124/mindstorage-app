@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { ApiErrorItem } from "@/data/types";
 import { InvitationSDK } from "../_sdk_";
 
 export const invitationKeys = {
@@ -22,7 +23,7 @@ export const useInvite = () => {
     mutate: mutation.mutate,
     mutateAsync: mutation.mutateAsync,
     data: mutation.data?.data,
-    error: mutation.data?.error,
+    error: mutation.error as ApiErrorItem | undefined | null,
     isPending: mutation.isPending,
     isSuccess: mutation.isSuccess,
     isError: mutation.isError,
@@ -47,7 +48,7 @@ export const useAcceptInvitation = () => {
     mutate: mutation.mutate,
     mutateAsync: mutation.mutateAsync,
     data: mutation.data?.data,
-    error: mutation.data?.error,
+    error: mutation.error as ApiErrorItem | undefined | null,
     isPending: mutation.isPending,
     isSuccess: mutation.isSuccess,
     isError: mutation.isError,
@@ -72,7 +73,7 @@ export const useRejectInvitation = () => {
     mutate: mutation.mutate,
     mutateAsync: mutation.mutateAsync,
     data: mutation.data?.data,
-    error: mutation.data?.error,
+    error: mutation.error as ApiErrorItem | undefined | null,
     isPending: mutation.isPending,
     isSuccess: mutation.isSuccess,
     isError: mutation.isError,

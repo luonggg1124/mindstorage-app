@@ -8,9 +8,4 @@ export type SpaceDetailResponse = {
   200: ISpaceDetailDto;
 };
 
-export type SpaceDetailError = {
-  [key: number]: {
-    message: string;
-    status: number;
-  };
-};
+// Error type removed: use ApiError directly in SDK

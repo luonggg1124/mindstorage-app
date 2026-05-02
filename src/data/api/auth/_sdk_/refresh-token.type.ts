@@ -16,10 +16,4 @@ export type RefreshTokenResponse = {
   };
 };
 
-export type RefreshTokenError = {
-  [key: number]: {
-    message: string;
-    status: number;
-    field?: string;
-  };
-};
+

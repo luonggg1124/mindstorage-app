@@ -10,10 +10,3 @@ export type VerifyEmailResponse = {
         session: string;
     }
 }
-export type VerifyEmailError = {
-    [key: number]: {
-        field?: string;
-        status: number;
-        message: string;
-    }
-}

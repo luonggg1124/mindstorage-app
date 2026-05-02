@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { SubmitEvent, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
 
 import clientPaths from "@/paths/client";
@@ -9,6 +9,7 @@ import { CreateTopicModal } from "./components/create-topic-modal";
 import { TopicTabs } from "./components/topic-tabs";
 import TopicNotes from "./components/topic-notes";
 import { EditTopicModal } from "./components/edit-topic-modal";
+
 
 const GroupPage = () => {
   const { id } = useParams();
@@ -40,19 +41,7 @@ const GroupPage = () => {
     setActiveTopicId(topics[0]?.id ?? null);
   }, [topics, activeTopicId]);
 
-  if (!id?.trim()) {
-    return (
-      <section className="space-y-4">
-        <h1 className="text-2xl font-bold">Thiếu mã group</h1>
-        <Link
-          to={clientPaths.space.list.getPath()}
-          className="inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10"
-        >
-          Quay lại
-        </Link>
-      </section>
-    );
-  }
+ 
 
   if (groupDetail.loading) {
     return (
@@ -68,12 +57,12 @@ const GroupPage = () => {
     );
   }
 
-  if (groupDetail.error || !groupDetail.data) {
+  if (groupDetail.error || !groupDetail.data || !id?.trim()) {
     return (
       <section className="space-y-4">
         <h1 className="text-2xl font-bold">Không tìm thấy group</h1>
         <p className="text-slate-300/80">
-          {(groupDetail.error as Error)?.message || "Group không tồn tại hoặc bạn không có quyền xem."}
+          {groupDetail?.error?.message || "Group không tồn tại hoặc bạn không có quyền xem."}
         </p>
         <Link
           to={clientPaths.space.list.getPath()}
@@ -87,16 +76,21 @@ const GroupPage = () => {
 
   const group = groupDetail.data;
 
-  const handleCreateTopic = async (event: FormEvent<HTMLFormElement>) => {
+  const handleCreateTopic = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     const name = newTopicName.trim();
     if (!name) return;
     const groupId = String(id ?? "").trim();
     if (!groupId) return;
-    const res = await createTopic.mutateAsync({ name, groupId });
-    if (res.error) return;
-    setNewTopicName("");
-    setIsCreateTopicOpen(false);
+
+    try {
+      await createTopic.mutateAsync({ name, groupId });
+
+      setNewTopicName("");
+      setIsCreateTopicOpen(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleDeleteTopic = (topic: { id: string }) => {
@@ -105,13 +99,28 @@ const GroupPage = () => {
       setActiveTopicId(topics.filter((t) => t.id !== topic.id)[0]?.id ?? null);
     }
   };
+  const handleUpdateTopic = async (event: SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const name = editDraft.name.trim();
+    if (!name || !editTopic) return;
+    const groupId = String(id ?? "").trim();
+    if (!groupId) return;
+
+    try {
+      await updateTopic.mutateAsync({ id: editTopic.id, name, groupId });
+      setEditTopic(null);
+      topicsQuery.refetch?.();
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   return (
     <section >
       <div className="rounded-xl border border-white/10 bg-white/5 p-4 shadow-sm backdrop-blur sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-slate-300/70">Group</p>
+            <p className="text-xs text-slate-300/70">Nhóm</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-100">{group.name}</h1>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300/90">
               {group.description?.trim() ? group.description : "Chưa có mô tả."}
@@ -152,7 +161,9 @@ const GroupPage = () => {
         onDeleteTopic={handleDeleteTopic}
       />
 
-      <TopicNotes activeTopicId={activeTopicId} activeTopicName={topics.find((t) => t.id === activeTopicId)?.name} />
+      <TopicNotes
+        activeTopicId={activeTopicId}
+        activeTopicName={topics.find((t) => t.id === activeTopicId)?.name} />
 
       <CreateTopicModal
         open={isCreateTopicOpen}
@@ -172,18 +183,7 @@ const GroupPage = () => {
         }}
         value={editDraft}
         onChange={setEditDraft}
-        onSubmit={async (event) => {
-          event.preventDefault();
-          const name = editDraft.name.trim();
-          if (!name || !editTopic) return;
-          const groupId = String(id ?? "").trim();
-          if (!groupId) return;
-
-          const res = await updateTopic.mutateAsync({ id: editTopic.id, name, groupId });
-          if (res.error) return;
-          setEditTopic(null);
-          topicsQuery.refetch?.();
-        }}
+        onSubmit={handleUpdateTopic}
         isPending={updateTopic.isPending}
         errorMessage={updateTopic.error?.message || undefined}
       />

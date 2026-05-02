@@ -1,6 +1,7 @@
 /* eslint-disable */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import type { ApiError } from "@/data/types";
 import { NotificationSDK } from "../_sdk_";
 import { myNotificationsKeys, notificationKeys, useNotificationStore } from "./get";
 
@@ -25,7 +26,11 @@ export const useReadAllNotifications = () => {
     mutateAsync: mutation.mutateAsync,
     isPending: mutation.isPending,
     data: mutation.data?.data,
-    error: mutation.data?.error,
+    error: mutation.error as ApiError | undefined | null,
+   
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    reset: mutation.reset,
   };
 };
 
@@ -48,7 +53,10 @@ export const useReadOneNotification = () => {
     mutateAsync: mutation.mutateAsync,
     isPending: mutation.isPending,
     data: mutation.data?.data,
-    error: mutation.data?.error,
+    error: mutation.error as ApiError | undefined | null,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    reset: mutation.reset,
   };
 };
 

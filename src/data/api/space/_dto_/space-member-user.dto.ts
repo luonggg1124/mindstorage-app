@@ -1,6 +1,5 @@
 import type { UserGender } from "@/data/models/user";
-
-export type RoleActionDto = "EDITOR" | "VIEWER" | "OWNER";
+import type { RoleAction } from "@/data/types/role-action";
 
 export interface ISpaceMemberUserDto {
   id: number; // backend: Long
@@ -9,6 +8,6 @@ export interface ISpaceMemberUserDto {
   fullName: string;
   gender: UserGender;
   joinedAt: string; // ISO string
-  role: RoleActionDto;
+  role: RoleAction;
 }
 

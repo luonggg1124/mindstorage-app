@@ -13,10 +13,3 @@ export type SearchUsersResponse = {
   200: IPageResponse<ISimpleUserDto>;
 };
 
-export type SearchUsersError = {
-  [key: number]: {
-    message: string;
-    status: number;
-  };
-};
-

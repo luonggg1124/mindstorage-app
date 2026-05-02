@@ -53,9 +53,7 @@ export const useNotesByTopicInfinite = (
           size: queryKey.size,
         },
       });
-      if (response.error) {
-        throw new Error(response.error?.message || "Lỗi khi lấy danh sách note");
-      }
+     
       const payload = response.data;
       if (!payload) {
         throw new Error("Không có dữ liệu");
@@ -144,9 +142,7 @@ export const useNotesByParentInfinite = (
           size: queryKey.size,
         },
       });
-      if (response.error) {
-        throw new Error(response.error?.message || "Lỗi khi lấy danh sách ghi chú con");
-      }
+      
       const payload = response.data;
       if (!payload) {
         throw new Error("Không có dữ liệu");

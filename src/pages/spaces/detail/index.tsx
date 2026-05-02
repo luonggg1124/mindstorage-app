@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { SubmitEvent, useState } from "react";
 import { Link, useParams } from "react-router";
 
 import {
@@ -15,7 +15,7 @@ import { useCreateGroup, useDeleteGroup, useGroupsBySpaceInfinite, useUpdateGrou
 import { formatRelative } from "@/utils/date";
 import LoadingDots from "@/components/animate/loading-dots";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontalIcon, PencilIcon, Settings2Icon, Share2Icon, Trash2Icon, UsersIcon } from "lucide-react";
+import { MoreHorizontalIcon, PencilIcon, RefreshCcwIcon, Settings2Icon, Share2Icon, Trash2Icon, UsersIcon } from "lucide-react";
 import { EditGroupModal } from "./components/edit-group-modal";
 import ShareSpaceModal from "./components/share-space-modal";
 import ScrollInfinite from "@/components/custom/scroll-infinite";
@@ -99,18 +99,18 @@ const SpaceDetailPage = () => {
   const space = spaceDetail.data;
   const groups = groupsInfinite.data ?? [];
 
-  const handleAddGroup = async (event: FormEvent<HTMLFormElement>) => {
+  const handleAddGroup = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     const name = newGroup.name.trim();
     if (!name) return;
     const spaceId = id;
     
-    const res = await createGroup.mutateAsync({
+     await createGroup.mutateAsync({
       name,
       description: newGroup.description.trim(),
       spaceId,
     });
-    if (res.error) return;
+    
     setNewGroup({ name: "", description: "" });
     setIsAddGroupOpen(false);
   };
@@ -118,16 +118,16 @@ const SpaceDetailPage = () => {
     if (!editGroup) return;
     const spaceId = id;
    
-    const res = await updateGroup.mutateAsync({ id: editGroup.id, name, description, spaceId });
-    if (res.error) return;
+   await updateGroup.mutateAsync({ id: editGroup.id, name, description, spaceId });
+    
     setEditGroup(null);
     groupsInfinite.invalidate();
   }
 
   const handleConfirmDeleteGroup = async () => {
     if (!deleteTarget) return;
-    const res = await deleteGroup.mutateAsync({ id: deleteTarget.id });
-    if (res.error) return;
+    await deleteGroup.mutateAsync({ id: deleteTarget.id });
+    
     setDeleteTarget(null);
     setDeleteConfirmText("");
     groupsInfinite.invalidate();
@@ -208,6 +208,15 @@ const SpaceDetailPage = () => {
           placeholder="Tìm nhóm (tên/mô tả)..."
           aria-label="Tìm nhóm"
         />
+        <button
+          type="button"
+          onClick={() => groupsInfinite.refetch()}
+          disabled={groupsInfinite.fetching || groupsInfinite.fetchingNextPage}
+          className="inline-flex h-10 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 text-sm font-medium text-slate-200 transition hover:bg-white/10 disabled:opacity-60"
+        >
+          <RefreshCcwIcon className={["size-4", groupsInfinite.fetching ? "animate-spin" : null].filter(Boolean).join(" ")} />
+          Làm mới
+        </button>
         <span className="text-sm text-slate-300/80">
           Đang xem <span className="font-medium text-slate-100">{groups.length}</span> /{" "}
           <span className="font-medium text-slate-100">{groupsInfinite.total || groups.length}</span>
@@ -226,7 +235,7 @@ const SpaceDetailPage = () => {
         </div>
       ) : groupsInfinite.error ? (
         <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-6 text-sm text-red-200">
-          {(groupsInfinite.error as Error)?.message || "Lỗi khi tải danh sách nhóm."}
+          {groupsInfinite.error?.message || "Lỗi khi tải danh sách nhóm."}
         </div>
       ) : groups.length > 0 ? (
         <ScrollInfinite

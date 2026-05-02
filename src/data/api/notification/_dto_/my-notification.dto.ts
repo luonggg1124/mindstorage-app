@@ -15,6 +15,7 @@ export interface IMyNotificationDto {
 
 export type IInviteNotificationDataDto = {
   invitationId?: string;
+  invitationStatus?: string;
   entityId?: string;
   entityName?: string;
   entityType?: string;

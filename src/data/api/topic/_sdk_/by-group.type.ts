@@ -10,9 +10,4 @@ export type TopicsByGroupResponse = {
   200: ITopicByGroupDto[];
 };
 
-export type TopicsByGroupError = {
-  [key: number]: {
-    message: string;
-    status: number;
-  };
-};
+

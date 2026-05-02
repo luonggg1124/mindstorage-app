@@ -16,11 +16,3 @@ export type CreateGroupResponse = {
   };
 };
 
-export type CreateGroupError = {
-  [key: number]: {
-    message: string;
-    status: number;
-    field?: string;
-  };
-};
-

@@ -20,10 +20,3 @@ export type GroupBySpaceResponse = {
   };
 };
 
-export type GroupBySpaceError = {
-  [key: number]: {
-    message: string;
-    status: number;
-  };
-};
-

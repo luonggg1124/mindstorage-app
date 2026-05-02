@@ -13,15 +13,13 @@ function round6(n: number): number {
 }
 
 const fetchWeather = async (queryKey: { latitude: number; longitude: number }) => {
-  const { data, error } = await UtilsSDK.weather({
+  const { data } = await UtilsSDK.weather({
     query: {
       latitude: queryKey.latitude,
       longitude: queryKey.longitude,
     },
   });
-  if (error) {
-    throw new Error(error?.message || "Lỗi khi lấy thời tiết");
-  }
+  
   if (!data) {
     throw new Error("Không có dữ liệu thời tiết");
   }

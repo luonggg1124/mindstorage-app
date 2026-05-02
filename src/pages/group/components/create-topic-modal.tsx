@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+
 
 import LoadingDots from "@/components/animate/loading-dots";
 import {
@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import type { SubmitEvent } from "react";
 
 type CreateTopicModalProps = {
   open: boolean;
@@ -16,7 +17,7 @@ type CreateTopicModalProps = {
   groupName: string;
   name: string;
   onNameChange: (next: string) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
   isPending: boolean;
   errorMessage?: string;
 };

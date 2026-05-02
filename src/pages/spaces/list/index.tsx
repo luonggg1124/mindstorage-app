@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { SubmitEvent, useMemo, useState } from "react";
 import { Link } from "react-router";
 
 import {
@@ -19,8 +19,13 @@ import { EditSpaceModal } from "./components/edit-space-modal";
 import { useUpdateSpace } from "@/data/api/space";
 import ScrollInfinite from "@/components/custom/scroll-infinite";
 import { useDebounce } from "@/hooks/use-debounce";
+import { canDeleteByRole, canEditByRole, RoleAction } from "@/data/types";
+import { useAuth } from "@/data/api/auth";
+import { toast } from "@/lib/toast";
+import { RefreshCcwIcon } from "lucide-react";
 
 const SpacesPage = () => {
+  const { user } = useAuth();
   const createSpace = useCreateSpace();
   const updateSpace = useUpdateSpace();
   const deleteSpace = useDeleteSpace();
@@ -41,31 +46,48 @@ const SpacesPage = () => {
     description: "",
   });
 
-  const handleCreateSpace = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleCreateSpace = async (event: SubmitEvent<HTMLFormElement>) => {
+    try {
+      event.preventDefault();
 
-    const name = newSpace.name.trim();
-    const description = newSpace.description.trim();
+      const name = newSpace.name.trim();
+      const description = newSpace.description.trim();
 
-    if (!name) {
-      return;
+      if (!name) {
+        return;
+      }
+
+      await createSpace.mutateAsync({ name, description });
+
+      setNewSpace({ name: "", description: "" });
+      setIsCreateSpaceOpen(false);
+    } catch  {
+      toast.error("Đã có lỗi xảy ra.");
     }
-
-    const res = await createSpace.mutateAsync({ name, description });
-    if (res.error) return;
-    setNewSpace({ name: "", description: "" });
-    setIsCreateSpaceOpen(false);
   };
 
   const handleConfirmDeleteSpace = async () => {
-    if (!deleteTarget) return;
-    const res = await deleteSpace.mutateAsync({ id: deleteTarget.id });
-    if (res.error) return;
-    setDeleteTarget(null);
-    setDeleteConfirmText("");
-    spacesInfinite.invalidate();
-  };
+    try {
+      if (!deleteTarget) return;
+      await deleteSpace.mutateAsync({ id: deleteTarget.id });
 
+      setDeleteTarget(null);
+      setDeleteConfirmText("");
+      spacesInfinite.invalidate();
+    } catch  {
+      toast.error("Đã có lỗi xảy ra.");
+    }
+  };
+  const handleSubmit = async ({ name, description }: { name: string; description: string }) => {
+    try {
+      if (!editTarget) return;
+      await updateSpace.mutateAsync({ id: editTarget.id, name, description });
+
+      setEditTarget(null);
+    } catch  {
+      toast.error("Đã có lỗi xảy ra.");
+    }
+  }
   return (
     <>
       <section className="space-y-6">
@@ -129,6 +151,22 @@ const SpacesPage = () => {
                 placeholder="Tìm không gian (tên/mô tả)..."
                 aria-label="Tìm không gian"
               />
+              <button
+                type="button"
+                onClick={() => spacesInfinite.refetch()}
+                disabled={spacesInfinite.fetching || spacesInfinite.fetchingNextPage}
+                className="inline-flex h-10 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 text-sm font-medium text-slate-200 transition hover:bg-white/10 disabled:opacity-60"
+              >
+                <RefreshCcwIcon
+                  className={[
+                    "size-4",
+                    spacesInfinite.fetching ? "animate-spin" : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                />
+                Làm mới
+              </button>
               <span className="text-sm text-slate-300/80">
                 Đang xem <span className="font-medium text-slate-100">{spaces.length}</span> /{" "}
                 <span className="font-medium text-slate-100">{spacesInfinite.total || spaces.length}</span>
@@ -141,11 +179,22 @@ const SpacesPage = () => {
               isFetchingNextPage={spacesInfinite.fetchingNextPage}
               onLoadMore={() => spacesInfinite.fetchNextPage()}
               className="mt-4"
-             
+
             >
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {spaces.map((space) => {
                   const count = Number.isFinite(space.groupCount) ? space.groupCount : 0;
+                  const role = (space.role ?? RoleAction.OWNER) as RoleAction;
+                  const canEdit = canEditByRole(role);
+                  const canDelete = canDeleteByRole(role);
+                  const ownerName =
+                    (space.owner?.fullName ?? "").trim() ||
+                    (space.owner?.username ?? "").trim() ||
+                    "—";
+                  const ownerId = String(space.owner?.id ?? "").trim();
+                  const currentUserId = user?.id != null ? String(user.id) : "";
+                  const showCreatedBy = ownerId.length > 0 && currentUserId.length > 0 && ownerId !== currentUserId;
+                  const lastActivity = space.lastActivityAt ?? null;
                   return (
                     <div
                       key={space.id}
@@ -186,6 +235,8 @@ const SpacesPage = () => {
                                     description: space.description ?? "",
                                   })
                                 }
+                                disabled={!canEdit}
+                                className={!canEdit ? "opacity-60" : undefined}
                               >
                                 <PencilIcon className="size-4" />
                                 <span>Sửa</span>
@@ -195,7 +246,11 @@ const SpacesPage = () => {
                                   setDeleteTarget({ id: space.id, name: space.name });
                                   setDeleteConfirmText("");
                                 }}
-                                className="text-red-300 focus:text-red-200"
+                                disabled={!canDelete}
+                                className={[
+                                  "text-red-300 focus:text-red-200",
+                                  !canDelete ? "opacity-60" : null,
+                                ].join(" ")}
                               >
                                 <Trash2Icon className="size-4" />
                                 <span>Xóa</span>
@@ -205,12 +260,22 @@ const SpacesPage = () => {
                         </div>
                       </div>
 
-                      <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-300/80">
+                      <div
+                        className={[
+                          "mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-300/80",
+                          showCreatedBy ? "justify-between" : "justify-end",
+                        ].join(" ")}
+                      >
+                        {showCreatedBy ? (
+                          <span className="truncate">
+                            Tạo bởi <span className="text-slate-200">{ownerName}</span>
+                          </span>
+                        ) : null}
                         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                          Tạo: <span className="text-slate-100">{formatRelative(space.createdAt, "—")}</span>
-                        </span>
-                        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                          Cập nhật: <span className="text-slate-100">{formatRelative(space.updatedAt, "—")}</span>
+                          Hoạt động:{" "}
+                          <span className="text-slate-100">
+                            {lastActivity ? formatRelative(lastActivity, "—") : "—"}
+                          </span>
                         </span>
                       </div>
                     </div>
@@ -358,12 +423,7 @@ const SpacesPage = () => {
         initialValue={{ name: editTarget?.name ?? "", description: editTarget?.description ?? "" }}
         isPending={updateSpace.isPending}
         errorMessage={updateSpace.error?.message || undefined}
-        onSubmit={async ({ name, description }) => {
-          if (!editTarget) return;
-          const res = await updateSpace.mutateAsync({ id: editTarget.id, name, description });
-          if (res.error) return;
-          setEditTarget(null);
-        }}
+        onSubmit={handleSubmit}
       />
     </>
   );

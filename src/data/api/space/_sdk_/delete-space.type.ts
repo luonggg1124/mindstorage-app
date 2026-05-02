@@ -8,11 +8,3 @@ export type DeleteSpaceResponse = {
   204: void;
 };
 
-export type DeleteSpaceError = {
-  [key: number]: {
-    message: string;
-    status: number;
-    field?: string;
-  };
-};
-

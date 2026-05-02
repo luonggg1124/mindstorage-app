@@ -1,51 +1,60 @@
-import { client } from "@/data/client.config";
+import { client, safeRequest } from "@/data/client.config";
+import type { ApiError } from "@/data/types";
 import {
-  ValidUsernamePasswordError,
   ValidUsernamePasswordRequest,
   ValidUsernamePasswordResponse,
 } from "./valid-username-password.type";
-import type { MyProfileError, MyProfileResponse } from "./my-profile.type";
-import type { SearchUsersError, SearchUsersRequest, SearchUsersResponse } from "./search.type";
+import type { MyProfileResponse } from "./my-profile.type";
+import type { SearchUsersRequest, SearchUsersResponse } from "./search.type";
 import type {
-  SearchInviteUsersError,
   SearchInviteUsersRequest,
   SearchInviteUsersResponse,
 } from "./search-invite.type";
 import apiPaths from "@/paths/api";
 
 export class UserSDK {
-  static async validUsernamePassword<ThrowOnError extends boolean = false>(
-    request: ValidUsernamePasswordRequest
-  ) {
-    const response = await client.post<
-      ValidUsernamePasswordResponse,
-      ValidUsernamePasswordError,
-      ThrowOnError
-    >({
-      url: apiPaths.user.existsUsername.path,
-      body: request.body,
-    });
+  static async validUsernamePassword(request: ValidUsernamePasswordRequest) {
+    const response = await safeRequest(() =>
+      client.post<
+        ValidUsernamePasswordResponse,
+        ApiError,
+        true
+      >({
+        url: apiPaths.user.existsUsername.path,
+        body: request.body,
+        throwOnError: true,
+      })
+    );
     return response;
   }
 
-  static async myProfile<ThrowOnError extends boolean = false>() {
-    const response = await client.get<MyProfileResponse, MyProfileError, ThrowOnError>({
-      url: apiPaths.user.myProfile.path,
-    });
+  static async myProfile() {
+    const response = await safeRequest(() =>
+      client.get<MyProfileResponse, ApiError, true>({
+        url: apiPaths.user.myProfile.path,
+        throwOnError: true,
+      })
+    );
     return response;
   }
 
-  static async search<ThrowOnError extends boolean = false>(request: SearchUsersRequest) {
-    const response = await client.get<SearchUsersResponse, SearchUsersError, ThrowOnError>({
-      url: apiPaths.user.search.getPath(request.query),
-    });
+  static async search(request: SearchUsersRequest) {
+    const response = await safeRequest(() =>
+      client.get<SearchUsersResponse, ApiError, true>({
+        url: apiPaths.user.search.getPath(request.query),
+        throwOnError: true,
+      })
+    );
     return response;
   }
 
-  static async searchInvite<ThrowOnError extends boolean = false>(request: SearchInviteUsersRequest) {
-    const response = await client.get<SearchInviteUsersResponse, SearchInviteUsersError, ThrowOnError>({
-      url: apiPaths.user.searchInvite.getPath(request.query),
-    });
+  static async searchInvite(request: SearchInviteUsersRequest) {
+    const response = await safeRequest(() =>
+      client.get<SearchInviteUsersResponse, ApiError, true>({
+        url: apiPaths.user.searchInvite.getPath(request.query),
+        throwOnError: true,
+      })
+    );
     return response;
   }
 }

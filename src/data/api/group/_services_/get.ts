@@ -1,5 +1,7 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import { GroupSDK } from "../_sdk_";
+import { ApiErrorItem } from "@/data/types";
 
 export const groupKeys = {
   all: ["group"] as const,
@@ -21,14 +23,11 @@ export const useGroupBySpace = (spaceId?: string) => {
   const query = useQuery({
     queryKey: groupKeys.bySpace(queryKey),
     queryFn: async () => {
-      const { data, error } = await GroupSDK.bySpace({
+      const response = await GroupSDK.bySpace({
         params: { spaceId: normalizedId },
         query: { q: "", page: 1, size: 1000 },
       });
-      if (error) {
-        throw new Error(error?.message || "Lỗi khi lấy danh sách group");
-      }
-      return Array.isArray(data?.data) ? data.data : [];
+      return Array.isArray(response.data?.data) ? response.data.data : [];
     },
     enabled,
   });
@@ -36,7 +35,7 @@ export const useGroupBySpace = (spaceId?: string) => {
   return {
     loading: query.isLoading,
     data: query.data,
-    error: query.error,
+    error: query.error as ApiErrorItem | undefined | null,
     mutate: () => query.refetch(),
     fetching: query.isFetching,
     refetch: query.refetch,
@@ -87,14 +86,7 @@ export const useGroupsBySpaceInfinite = (
           size: queryKey.size,
         },
       });
-      if (response.error) {
-        throw new Error(response.error?.message || "Lỗi khi lấy danh sách group");
-      }
-      const payload = response.data;
-      if (!payload) {
-        throw new Error("Không có dữ liệu");
-      }
-      return payload;
+      return response.data;
     },
     getNextPageParam: (lastPage, allPages) => {
       if (!lastPage || !Array.isArray(lastPage.data)) return undefined;
@@ -126,7 +118,7 @@ export const useGroupsBySpaceInfinite = (
     data: allData,
     pages: query.data?.pages ?? [],
     total,
-    error: query.error,
+    error: query.error as ApiErrorItem | undefined | null,
     hasNextPage: query.hasNextPage,
     fetchNextPage: query.fetchNextPage,
     refetch: query.refetch,
@@ -146,14 +138,8 @@ export const useDetailGroup = (id?: string) => {
   const query = useQuery({
     queryKey: groupKeys.detail(queryKey),
     queryFn: async () => {
-      const { data, error } = await GroupSDK.detail({ params: { id: normalizedId } });
-      if (error) {
-        throw new Error(error?.message || "Lỗi khi lấy chi tiết group");
-      }
-      if (!data) {
-        throw new Error("Không tìm thấy group");
-      }
-      return data;
+      const response = await GroupSDK.detail({ params: { id: normalizedId } });
+      return response.data;
     },
     enabled,
   });
@@ -161,7 +147,7 @@ export const useDetailGroup = (id?: string) => {
   return {
     loading: query.isLoading,
     data: query.data,
-    error: query.error,
+    error: query.error as ApiErrorItem | undefined | null,
     fetching: query.isFetching,
     refetch: query.refetch,
     invalidate: () => {

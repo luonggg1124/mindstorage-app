@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 
 import LoadingDots from "@/components/animate/loading-dots";
 import Editor from "@/components/custom/editor";
@@ -26,7 +26,7 @@ export function UpdateNoteModal({
   onChange: (next: { title: string; summary: string }) => void;
   isPending: boolean;
   errorMessage?: string;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type {  ApiErrorItem } from "@/data/types";
 import { GroupSDK } from "../_sdk_";
 import { groupKeys } from "./get";
 
@@ -21,7 +22,7 @@ export const useCreateGroup = () => {
       mutate: mutation.mutate,
       mutateAsync: mutation.mutateAsync,
       data: mutation.data?.data,
-      error: mutation.data?.error,
+      error: mutation.error as ApiErrorItem | undefined | null,
       isPending: mutation.isPending,
       isSuccess: mutation.isSuccess,
       isError: mutation.isError,
@@ -54,7 +55,7 @@ export const useUpdateGroup = () => {
     mutate: mutation.mutate,
     mutateAsync: mutation.mutateAsync,
     data: mutation.data?.data,
-    error: mutation.data?.error,
+    error: mutation.error as ApiErrorItem | undefined | null,
     isPending: mutation.isPending,
     isSuccess: mutation.isSuccess,
     isError: mutation.isError,

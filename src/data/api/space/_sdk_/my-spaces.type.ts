@@ -17,9 +17,4 @@ export type MySpacesResponse = {
   };
 };
 
-export type MySpacesError = {
-  [key: number]: {
-    message: string;
-    status: number;
-  };
-};
+// Error type removed: use ApiError directly in SDK

@@ -1,17 +1,23 @@
 import { Link } from "react-router";
+import { useMemo, useState } from "react";
 
 import { currentUserProfile, otherProfiles } from "../data";
 import clientPaths from "@/paths/client";
-import Chart from "@/components/custom/chart";
-import type { ApexOptions } from "apexcharts";
 import { useAuth } from "@/data/api/auth";
-import { FriendSearchDialogTrigger } from "./components/friend-search-dialog";
 import { useMyProfile } from "@/data/api/user";
+import { useMyActivities } from "@/data/api/statistics";
+import ActivityChartCard from "./components/activity-chart-card";
+import ContributionChartCard from "./components/contribution-chart-card";
 
 const MyProfilePage = () => {
   const profile = currentUserProfile;
   const { user } = useAuth();
   const { data: myProfile, loading } = useMyProfile();
+  const [range, setRange] = useState<7 | 30>(7);
+  const activities = useMyActivities(range);
+
+  const notesData = useMemo(() => activities.data?.notesData ?? [], [activities.data?.notesData]);
+  const topicsData = useMemo(() => activities.data?.topicsData, [activities.data?.topicsData]);
 
   const displayName =
     (myProfile?.fullName ?? "").trim() ||
@@ -31,75 +37,6 @@ const MyProfilePage = () => {
       .slice(0, 8) ?? [];
   const chips = hobbyChips.length > 0 ? hobbyChips : profile.skills;
   const bioText = (myProfile?.hobbies ?? user?.hobbies ?? "").trim() || profile.bio;
-
-  // Fake data (tạm thời) — thay bằng API thật sau
-  const activitySeries = [
-    {
-      name: "Notes",
-      data: [2, 1, 4, 3, 6, 4, 5],
-    },
-  ];
-
-  const activityOptions: ApexOptions = {
-    chart: {
-      type: "area",
-      toolbar: { show: false },
-      zoom: { enabled: false },
-    },
-    stroke: { curve: "smooth", width: 2 },
-    grid: { borderColor: "rgba(255,255,255,0.08)" },
-    dataLabels: { enabled: false },
-    xaxis: {
-      categories: ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
-      labels: { style: { colors: "rgba(226,232,240,0.7)" } },
-      axisBorder: { color: "rgba(255,255,255,0.10)" },
-      axisTicks: { color: "rgba(255,255,255,0.10)" },
-    },
-    yaxis: {
-      labels: { style: { colors: "rgba(226,232,240,0.7)" } },
-    },
-    tooltip: { theme: "dark" },
-    fill: {
-      type: "gradient",
-      gradient: { shadeIntensity: 0.6, opacityFrom: 0.35, opacityTo: 0.05 },
-    },
-    colors: ["#60a5fa"],
-  };
-
-  const contributionSeries = [44, 28, 18, 10];
-  const contributionLabels = ["Notes", "Topics", "Groups", "Spaces"];
-  const contributionOptions: ApexOptions = {
-    chart: { type: "donut" },
-    labels: contributionLabels,
-    legend: {
-      position: "bottom",
-      labels: { colors: "rgba(226,232,240,0.8)" },
-      fontSize: "12px",
-      itemMargin: { horizontal: 10, vertical: 6 },
-    },
-    dataLabels: { enabled: false },
-    stroke: { width: 0 },
-    plotOptions: {
-      pie: {
-        donut: {
-          size: "70%",
-          labels: {
-            show: true,
-            name: { show: true, color: "rgba(226,232,240,0.8)" },
-            value: { show: true, color: "rgba(255,255,255,0.92)", fontSize: "22px", fontWeight: 700 },
-            total: {
-              show: true,
-              label: "Tổng",
-              color: "rgba(226,232,240,0.7)",
-              formatter: () => "100%",
-            },
-          },
-        },
-      },
-    },
-    tooltip: { theme: "dark" },
-    colors: ["#60a5fa", "#a78bfa", "#34d399", "#fbbf24"],
-  };
 
   return (
     <section className="space-y-6">
@@ -163,15 +100,7 @@ const MyProfilePage = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <FriendSearchDialogTrigger />
-            <Link
-              to={clientPaths.space.list.getPath()}
-              className="inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10"
-            >
-              Đi đến spaces
-            </Link>
-          </div>
+          
         </div>
         )}
       </div>
@@ -192,12 +121,12 @@ const MyProfilePage = () => {
           <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur">
             <p className="text-xs text-slate-300/70">Không gian</p>
             <p className="mt-2 text-3xl font-semibold text-slate-100">{myProfile?.spacesCount ?? "—"}</p>
-            <p className="mt-1 text-xs text-slate-300/70">Tổng số space</p>
+            <p className="mt-1 text-xs text-slate-300/70">Tổng </p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur">
             <p className="text-xs text-slate-300/70">Không gian đã tham gia</p>
             <p className="mt-2 text-3xl font-semibold text-slate-100">{myProfile?.spaceMembersCount ?? "—"}</p>
-            <p className="mt-1 text-xs text-slate-300/70">Số space bạn đang tham gia</p>
+            <p className="mt-1 text-xs text-slate-300/70">Số không gian bạn đang tham gia</p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur">
             <p className="text-xs text-slate-300/70">Followers</p>
@@ -215,27 +144,13 @@ const MyProfilePage = () => {
       {/* Charts + highlights */}
       <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
         <div className="space-y-6">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm backdrop-blur">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-100">Hoạt động 7 ngày</h2>
-                <p className="mt-1 text-sm text-slate-300/70">Số note tạo (fake data)</p>
-              </div>
-              <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200">
-                Tuần này
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <Chart
-                options={{
-                  ...activityOptions,
-                  series: activitySeries
-                }}
-                height={260}
-              />
-            </div>
-          </div>
+          <ActivityChartCard
+            range={range}
+            loading={activities.loading}
+            errorMessage={activities.error?.message}
+            notesData={notesData}
+            onToggleRange={() => setRange((prev) => (prev === 7 ? 30 : 7))}
+          />
 
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm backdrop-blur">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -257,20 +172,11 @@ const MyProfilePage = () => {
         </div>
 
         <aside className="space-y-6">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm backdrop-blur">
-            <h2 className="text-lg font-semibold text-slate-100">Phân bổ đóng góp</h2>
-            <p className="mt-1 text-sm text-slate-300/70">Fake data, minh hoạ dashboard</p>
-
-            <div className="mt-4">
-              <Chart
-                options={{
-                  ...contributionOptions,
-                  series: contributionSeries
-                }}
-                height={280}
-              />
-            </div>
-          </div>
+          <ContributionChartCard
+            loading={activities.loading}
+            errorMessage={activities.error?.message}
+            topicsData={topicsData}
+          />
 
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm backdrop-blur">
             <h2 className="text-lg font-semibold text-slate-100">Khám phá thành viên khác</h2>

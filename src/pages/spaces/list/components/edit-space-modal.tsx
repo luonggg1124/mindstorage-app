@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { SubmitEvent, useEffect, useMemo, useState } from "react";
 
 import LoadingDots from "@/components/animate/loading-dots";
 import {
@@ -42,7 +42,7 @@ export function EditSpaceModal({
 
   const canSubmit = useMemo(() => draft.name.trim().length > 0 && !isPending, [draft.name, isPending]);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     const name = draft.name.trim();
     if (!name) return;

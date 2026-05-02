@@ -15,10 +15,3 @@ export type SearchInviteUsersResponse = {
   200: IPageResponse<IInviteUserDto>;
 };
 
-export type SearchInviteUsersError = {
-  [key: number]: {
-    message: string;
-    status: number;
-  };
-};
-

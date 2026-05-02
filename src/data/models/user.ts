@@ -4,6 +4,7 @@ export enum UserGender {
     FEMALE = "FEMALE",
     OTHER = "OTHER",
 }
+
 export interface IUser {
     id: number;
     username: string;

@@ -15,10 +15,3 @@ export type NotesByParentResponse = {
   200: IPageResponse<INoteByParentDto>;
 };
 
-export type NotesByParentError = {
-  [key: number]: {
-    message: string;
-    status: number;
-  };
-};
-

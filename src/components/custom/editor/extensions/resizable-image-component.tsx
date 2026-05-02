@@ -215,6 +215,7 @@ export const ResizableImageComponent: React.FC<NodeViewProps> = ({
               {/* Alignment buttons */}
               <div className="flex gap-1 bg-white rounded shadow-md p-1">
                 <button
+                  type="button"
                   className={`p-1 rounded ${align === "left" ? "bg-blue-100" : "hover:bg-gray-100"}`}
                   onClick={() => handleAlignChange("left")}
                   title="Align Left"
@@ -222,6 +223,7 @@ export const ResizableImageComponent: React.FC<NodeViewProps> = ({
                   <AlignLeft className="w-3 h-3" />
                 </button>
                 <button
+                  type="button"
                   className={`p-1 rounded ${align === "center" ? "bg-blue-100" : "hover:bg-gray-100"}`}
                   onClick={() => handleAlignChange("center")}
                   title="Align Center"
@@ -229,6 +231,7 @@ export const ResizableImageComponent: React.FC<NodeViewProps> = ({
                   <AlignCenter className="w-3 h-3" />
                 </button>
                 <button
+                  type="button"
                   className={`p-1 rounded ${align === "right" ? "bg-blue-100" : "hover:bg-gray-100"}`}
                   onClick={() => handleAlignChange("right")}
                   title="Align Right"
@@ -238,6 +241,7 @@ export const ResizableImageComponent: React.FC<NodeViewProps> = ({
               </div>
 
               <button
+                type="button"
                 className="p-1 bg-white rounded shadow-md hover:bg-gray-100"
                 onClick={() => deleteNode()}
                 title="Delete image"
