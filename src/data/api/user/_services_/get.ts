@@ -11,10 +11,8 @@ export const userKeys = {
 };
 
 const fetchMyProfile = async () => {
-  const { data, error } = await UserSDK.myProfile();
-  if (error) {
-    throw new Error(error?.message || "Lỗi khi tải hồ sơ của bạn");
-  }
+  const { data } = await UserSDK.myProfile();
+  
   if (!data) {
     throw new Error("Không có dữ liệu hồ sơ");
   }
@@ -88,9 +86,7 @@ export const useUserSearchInfinite = (
           size: queryKey.size,
         },
       });
-      if (response.error) {
-        throw new Error(response.error?.message || "Lỗi khi tìm kiếm người dùng");
-      }
+    
       const payload = response.data;
       if (!payload) {
         throw new Error("Không có dữ liệu");
@@ -183,9 +179,8 @@ export const useUserSearchInviteInfinite = (
           entityId,
         },
       });
-      if (response.error) {
-        throw new Error(response.error?.message || "Lỗi khi tìm kiếm người dùng để mời");
-      }
+     
+      
       const payload = response.data;
       if (!payload) {
         throw new Error("Không có dữ liệu");

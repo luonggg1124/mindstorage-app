@@ -30,6 +30,15 @@ const spacePaths = {
         getPath: (id: string | number, queries?: Record<string, string | number | boolean>) =>
             `/api/space/${id}/members${buildQueryString(queries)}`,
     },
+    memberRole: {
+        path: "/api/space/{spaceId}/members/{userId}/role",
+        getPath: (spaceId: string | number, userId: string | number) =>
+            `/api/space/${spaceId}/members/${userId}/role`,
+    },
+    myRole: {
+        path: "/api/space/{id}/my-role",
+        getPath: (id: string | number) => `/api/space/${id}/my-role`,
+    },
 }
 
 export default spacePaths;

@@ -1,8 +1,6 @@
-import { Link } from "react-router";
 import { useMemo, useState } from "react";
 
-import { currentUserProfile, otherProfiles } from "../data";
-import clientPaths from "@/paths/client";
+import { currentUserProfile } from "../data";
 import { useAuth } from "@/data/api/auth";
 import { useMyProfile } from "@/data/api/user";
 import { useMyActivities } from "@/data/api/statistics";
@@ -141,7 +139,7 @@ const MyProfilePage = () => {
         </div>
       )}
 
-      {/* Charts + highlights */}
+      {/* Charts */}
       <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
         <div className="space-y-6">
           <ActivityChartCard
@@ -151,24 +149,6 @@ const MyProfilePage = () => {
             notesData={notesData}
             onToggleRange={() => setRange((prev) => (prev === 7 ? 30 : 7))}
           />
-
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm backdrop-blur">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-100">Điểm nhấn</h2>
-                <p className="mt-1 text-sm text-slate-300/70">Các việc gần đây bạn đã làm</p>
-              </div>
-              <div className="text-xs text-slate-300/70">{profile.email}</div>
-            </div>
-
-            <ul className="mt-4 space-y-3 text-sm text-slate-200/90">
-              {profile.highlights.map((item) => (
-                <li key={item} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 leading-6">
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
 
         <aside className="space-y-6">
@@ -177,26 +157,6 @@ const MyProfilePage = () => {
             errorMessage={activities.error?.message}
             topicsData={topicsData}
           />
-
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm backdrop-blur">
-            <h2 className="text-lg font-semibold text-slate-100">Khám phá thành viên khác</h2>
-            <p className="mt-2 text-sm text-slate-300/70">Mở nhanh public profile (fake data).</p>
-
-            <div className="mt-4 space-y-3">
-              {otherProfiles.map((item) => (
-                <article key={item.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
-                  <p className="font-semibold text-slate-100">{item.name}</p>
-                  <p className="text-sm text-slate-300/70">{item.role}</p>
-                  <Link
-                    to={clientPaths.profile.detail.getPath(item.id)}
-                    className="mt-3 inline-flex rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-medium text-slate-200 transition hover:bg-white/10"
-                  >
-                    Xem hồ sơ
-                  </Link>
-                </article>
-              ))}
-            </div>
-          </div>
         </aside>
       </div>
     </section>

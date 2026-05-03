@@ -1,9 +1,10 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import type { ApiError } from "@/data/types";
 import type { CreateAttachmentResponse } from "../_sdk_/create.type";
 import { AttachmentSDK } from "../_sdk_";
+import { attachmentKeys } from "./get";
 
 export type UploadedAttachment = CreateAttachmentResponse[201];
 
@@ -87,8 +88,12 @@ export async function uploadAttachment(
 
 /** Mutation đơn giản, không theo dõi phase. */
 export const useUploadFile = () => {
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: (file: File) => uploadAttachment(file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: attachmentKeys.all });
+    },
   });
 
   return {
@@ -107,11 +112,15 @@ export const useUploadFile = () => {
 
 /** Giống `useUploadFile` nhưng có `loading`, `phase` (presign → put → create) để xử lý UI. */
 export const useUploadAttachment = () => {
+  const queryClient = useQueryClient();
   const [phase, setPhase] = useState<UploadAttachmentPhase>("idle");
 
   const mutation = useMutation({
     mutationFn: (file: File) =>
       uploadAttachment(file, { onPhaseChange: setPhase }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: attachmentKeys.all });
+    },
     onSettled: () => {
       setPhase("idle");
     },

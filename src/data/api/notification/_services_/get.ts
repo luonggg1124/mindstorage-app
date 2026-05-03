@@ -2,12 +2,9 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { create } from "zustand";
-import { useAuth } from "../../auth";
-import { Client } from "@stomp/stompjs";
-import { toast } from "@/lib/toast";
-import { INotification } from "@/data/models/notification";
-import type { IInviteNotificationDataDto, IMyNotificationDto, NotificationTypeDto } from "../_dto_";
+import type { IMyNotificationDto } from "../_dto_";
 import { NotificationSDK } from "../_sdk_";
+
 type NotificationStore = {
   unreadCount: number;
   setUnreadCount: (count: number) => void;
@@ -38,21 +35,6 @@ export type UseMyNotificationsInfiniteRequest = {
     size?: number;
   };
 };
-
-export function parseNotificationData(raw: string | null | undefined): IInviteNotificationDataDto | null {
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object") return parsed as IInviteNotificationDataDto;
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-export function isInviteNotificationType(type: NotificationTypeDto | null | undefined) {
-  return type === "INVITE_TO_JOIN_SPACE" || type === "INVITE_TO_JOIN_GROUP";
-}
 
 /**
  * Backend paging is 1-based by default (page=1).

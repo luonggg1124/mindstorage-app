@@ -7,6 +7,8 @@ import type { SpaceDetailRequest, SpaceDetailResponse } from "./detail-space.typ
 import type { UpdateSpaceRequest, UpdateSpaceResponse } from "./update-space.type";
 import type { DeleteSpaceRequest, DeleteSpaceResponse } from "./delete-space.type";
 import type { SpaceMembersRequest, SpaceMembersResponse } from "./members.type";
+import type { UpdateSpaceMemberRoleRequest, UpdateSpaceMemberRoleResponse } from "./update-member-role.type";
+import type { MySpaceRoleRequest, MySpaceRoleResponse } from "./my-space-role.type";
 
 
 export class SpaceSDK {
@@ -26,6 +28,16 @@ export class SpaceSDK {
         const response = await safeRequest(() =>
             client.get<SpaceDetailResponse, ApiError, true>({
                 url: apiPaths.space.detail.getPath(request.id),
+                throwOnError: true,
+            })
+        );
+        return response;
+    }
+
+    static async mySpaceRole(request: MySpaceRoleRequest) {
+        const response = await safeRequest(() =>
+            client.get<MySpaceRoleResponse, ApiError, true>({
+                url: apiPaths.space.myRole.getPath(request.id),
                 throwOnError: true,
             })
         );
@@ -73,6 +85,17 @@ export class SpaceSDK {
         );
         return response;
     }
+
+    static async updateMemberRole(request: UpdateSpaceMemberRoleRequest) {
+        const response = await safeRequest(() =>
+            client.patch<UpdateSpaceMemberRoleResponse, ApiError, true>({
+                url: apiPaths.space.memberRole.getPath(request.params.spaceId, request.params.userId),
+                body: request.body,
+                throwOnError: true,
+            })
+        );
+        return response;
+    }
  
 }
 
@@ -82,3 +105,5 @@ export type * from "./detail-space.type";
 export type * from "./members.type";
 export type * from "./my-spaces.type";
 export type * from "./update-space.type";
+export type * from "./update-member-role.type";
+export type * from "./my-space-role.type";

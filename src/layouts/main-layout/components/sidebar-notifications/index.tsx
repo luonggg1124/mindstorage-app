@@ -4,14 +4,15 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import ScrollInfinite from "@/components/custom/scroll-infinite";
 import { useAcceptInvitation, useRejectInvitation } from "@/data/api/invitation";
 import {
-  isInviteNotificationType,
-  parseNotificationData,
   useReadAllNotifications,
   useReadOneNotification,
   useMyNotificationsInfinite,
   useNotification,
   useUnreadNotificationCount,
 } from "@/data/api/notification";
+import type { IInviteNotificationData } from "@/data/models/notification";
+import { normalizeNotificationType, NotificationType } from "@/data/models/notification";
+import NotificationBody from "./notification-body";
 import { getRelativeTime } from "@/utils/date";
 import { InvitationStatus } from "@/data/models/invitation";
 
@@ -98,8 +99,9 @@ export function SidebarNotifications({ open, onOpenChange, onUnreadCountChange }
 
           {notificationsInfinite.data.map((n) => {
             const createdText = getRelativeTime(n.createdAt);
-            const isInvite = isInviteNotificationType(n.type);
-            const inviteMeta = isInvite ? parseNotificationData(n.data) : null;
+            const kind = normalizeNotificationType(n.type, n.data);
+            const isInvite = kind === NotificationType.INVITE;
+            const inviteMeta = isInvite ? (n.data as IInviteNotificationData | null) : null;
             const invitationId = inviteMeta?.invitationId?.trim();
             const invitationStatus = (inviteMeta?.invitationStatus ?? "").toUpperCase();
             const canShowInviteActions =
@@ -139,43 +141,12 @@ export function SidebarNotifications({ open, onOpenChange, onUnreadCountChange }
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        {!n.read ? <span className="mt-0.5 size-2 rounded-full bg-indigo-400" /> : null}
-                        <p
-                          className={[
-                            "truncate text-sm font-semibold",
-                            n.read ? "text-slate-200/80" : "text-slate-100",
-                          ].join(" ")}
-                        >
-                          {n.title}
-                        </p>
-                      </div>
-                      <p
-                        className={[
-                          "mt-1 line-clamp-2 text-xs",
-                          n.read ? "text-slate-300/55" : "text-slate-300/75",
-                        ].join(" ")}
-                      >
-                        {n.content}
-                      </p>
-                      {isInvite ? (
-                        <div className={["mt-2 text-xs", n.read ? "text-slate-300/55" : "text-slate-300/70"].join(" ")}>
-                          {inviteMeta?.senderName ? (
-                            <span>
-                              Từ <span className="text-slate-100">{inviteMeta.senderName}</span>
-                            </span>
-                          ) : null}
-                          {inviteMeta?.entityType || inviteMeta?.entityName || inviteMeta?.entityId ? (
-                            <span>
-                              {" "}
-                              · {inviteMeta?.entityType ?? "ENTITY"}:{" "}
-                              <span className="text-slate-100">
-                                {inviteMeta?.entityName?.trim() || inviteMeta?.entityId || "—"}
-                              </span>
-                            </span>
-                          ) : null}
+                      <div className="flex items-start gap-2">
+                        {!n.read ? <span className="mt-1.5 size-2 shrink-0 rounded-full bg-indigo-400" /> : null}
+                        <div className="min-w-0 flex-1">
+                          <NotificationBody row={{ type: n.type, data: n.data }} dimmed={n.read} />
                         </div>
-                      ) : null}
+                      </div>
                     </div>
                     <span className={["shrink-0 text-[11px]", n.read ? "text-slate-300/50" : "text-slate-300/70"].join(" ")}>
                       {createdText}

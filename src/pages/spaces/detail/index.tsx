@@ -1,4 +1,4 @@
-import { SubmitEvent, useState } from "react";
+import { SubmitEvent, useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 
 import {
@@ -10,7 +10,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import clientPaths from "@/paths/client";
-import { useDetailSpace, useSpaceMembersInfinite } from "@/data/api/space";
+import { useDetailSpace, useMyRoleInSpace } from "@/data/api/space";
+import { canEditByRole } from "@/data/types";
+import { RoleAction } from "@/data/types/role-action";
 import { useCreateGroup, useDeleteGroup, useGroupsBySpaceInfinite, useUpdateGroup } from "@/data/api/group";
 import { formatRelative } from "@/utils/date";
 import LoadingDots from "@/components/animate/loading-dots";
@@ -25,17 +27,13 @@ import SpaceMembersSheet from "./components/space-members-sheet";
 const SpaceDetailPage = () => {
   const { id } = useParams();
   const spaceDetail = useDetailSpace(id);
+  const myRoleInSpace = useMyRoleInSpace(id);
   const [q, setQ] = useState("");
   const debouncedQ = useDebounce(q, 500);
   const [shareOpen, setShareOpen] = useState(false);
   const [membersOpen, setMembersOpen] = useState(false);
-  const [memberQ, setMemberQ] = useState("");
-  const debouncedMemberQ = useDebounce(memberQ, 400);
   const groupsInfinite = useGroupsBySpaceInfinite({ params: { spaceId: id }, query: { q: debouncedQ, page: 1, size: 12 } });
-  const membersInfinite = useSpaceMembersInfinite({
-    params: { id: String(id ?? "") },
-    query: { q: debouncedMemberQ, size: 10 },
-  });
+
   const createGroup = useCreateGroup();
   const updateGroup = useUpdateGroup();
   const deleteGroup = useDeleteGroup();
@@ -44,6 +42,11 @@ const SpaceDetailPage = () => {
   const [deleteTarget, setDeleteTarget] = useState<null | { id: string; name: string }>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [newGroup, setNewGroup] = useState({ name: "", description: "" });
+
+  useEffect(() => {
+    if (myRoleInSpace.loading) return;
+    if (!canEditByRole(myRoleInSpace.data?.role)) setIsAddGroupOpen(false);
+  }, [myRoleInSpace.loading, myRoleInSpace.data?.role]);
 
   if (!id?.trim()) {
     return (
@@ -96,11 +99,35 @@ const SpaceDetailPage = () => {
     );
   }
 
+  if (!myRoleInSpace.loading && myRoleInSpace.error) {
+    return (
+      <section className="flex min-h-[50vh] flex-col items-center justify-center gap-6 px-4 text-center">
+        <div className="space-y-2">
+          <h1 className="text-xl font-semibold text-slate-100">Không tải được quyền</h1>
+          <p className="max-w-md text-sm text-slate-400">
+            {(myRoleInSpace.error as Error)?.message || "Đã có lỗi xảy ra vui lòng thử lại sau."}
+          </p>
+        </div>
+        <Link
+          to={clientPaths.space.list.getPath()}
+          className="inline-flex rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/10"
+        >
+          Quay lại 
+        </Link>
+      </section>
+    );
+  }
+
   const space = spaceDetail.data;
   const groups = groupsInfinite.data ?? [];
 
+  const isSpaceOwner = myRoleInSpace.data?.role === RoleAction.OWNER;
+  const canManageMemberRoles = !myRoleInSpace.loading && isSpaceOwner;
+  const canManageGroups = !myRoleInSpace.loading && canEditByRole(myRoleInSpace.data?.role);
+
   const handleAddGroup = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!canEditByRole(myRoleInSpace.data?.role)) return;
     const name = newGroup.name.trim();
     if (!name) return;
     const spaceId = id;
@@ -141,16 +168,19 @@ const SpaceDetailPage = () => {
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300/90">
               {space.description?.trim() ? space.description : "Chưa có mô tả."}
             </p>
+           
           </div>
 
           <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-            <button
-              type="button"
-              onClick={() => setIsAddGroupOpen(true)}
-              className="inline-flex rounded-full bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-400"
-            >
-              Thêm nhóm
-            </button>
+            {canManageGroups ? (
+              <button
+                type="button"
+                onClick={() => setIsAddGroupOpen(true)}
+                className="inline-flex rounded-full bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-400"
+              >
+                Thêm nhóm
+              </button>
+            ) : null}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -169,14 +199,16 @@ const SpaceDetailPage = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <button
-              type="button"
-              onClick={() => setShareOpen(true)}
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10"
-            >
-              <Share2Icon className="size-4" />
-              Chia sẻ
-            </button>
+            {!myRoleInSpace.loading && isSpaceOwner ? (
+              <button
+                type="button"
+                onClick={() => setShareOpen(true)}
+                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10"
+              >
+                <Share2Icon className="size-4" />
+                Chia sẻ
+              </button>
+            ) : null}
             <Link
               to={clientPaths.space.list.getPath()}
               className="inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10"
@@ -195,9 +227,8 @@ const SpaceDetailPage = () => {
         onOpenChange={(next) => {
           setMembersOpen(next);
         }}
-        q={memberQ}
-        onChangeQ={setMemberQ}
-        membersInfinite={membersInfinite}
+        spaceId={String(id)}
+        canManageMemberRoles={canManageMemberRoles}
       />
 
       <div className="flex flex-wrap items-center gap-3">
@@ -267,41 +298,43 @@ const SpaceDetailPage = () => {
                         {topicCount} chủ đề
                       </span>
 
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            type="button"
-                            className="inline-flex size-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
-                            aria-label="Mở menu"
-                          >
-                            <MoreHorizontalIcon className="size-4" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-36">
-                          <DropdownMenuItem
-                            onClick={() =>
-                              setEditGroup({
-                                id: group.id,
-                                name: group.name,
-                                description: group.description ?? "",
-                              })
-                            }
-                          >
-                            <PencilIcon className="size-4" />
-                            <span>Sửa</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setDeleteTarget({ id: group.id, name: group.name });
-                              setDeleteConfirmText("");
-                            }}
-                            className="text-red-300 focus:text-red-200"
-                          >
-                            <Trash2Icon className="size-4" />
-                            <span>Xóa</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {canManageGroups ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              className="inline-flex size-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
+                              aria-label="Mở menu"
+                            >
+                              <MoreHorizontalIcon className="size-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-36">
+                            <DropdownMenuItem
+                              onClick={() =>
+                                setEditGroup({
+                                  id: group.id,
+                                  name: group.name,
+                                  description: group.description ?? "",
+                                })
+                              }
+                            >
+                              <PencilIcon className="size-4" />
+                              <span>Sửa</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setDeleteTarget({ id: group.id, name: group.name });
+                                setDeleteConfirmText("");
+                              }}
+                              className="text-red-300 focus:text-red-200"
+                            >
+                              <Trash2Icon className="size-4" />
+                              <span>Xóa</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : null}
                     </div>
                   </div>
 

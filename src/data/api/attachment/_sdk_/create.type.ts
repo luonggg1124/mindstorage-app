@@ -1,3 +1,5 @@
+import { IAttachment } from "@/data/models/attachment";
+
 export type CreateAttachmentRequest = {
   body: {
     fileKey: string;
@@ -8,14 +10,5 @@ export type CreateAttachmentRequest = {
 };
 
 export type CreateAttachmentResponse = {
-  201: {
-    id: string;
-    fileKey: string;
-    fileUrl: string;
-    originalName: string;
-    mimeType: string;
-    fileSize: number;
-    createdAt: string;
-    updatedAt: string;
-  };
+  201: IAttachment;
 };

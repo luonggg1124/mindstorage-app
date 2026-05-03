@@ -16,7 +16,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { BellIcon, CommandIcon, FolderKanbanIcon, HouseIcon, SearchIcon, UsersIcon } from "lucide-react";
+import clientPaths from "@/paths/client";
+import { BellIcon, CommandIcon, FolderKanbanIcon, HouseIcon, ImagesIcon, SearchIcon, UsersIcon } from "lucide-react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [searchOpen, setSearchOpen] = React.useState(false);
@@ -34,6 +35,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Không gian",
       url: "/spaces",
       icon: <FolderKanbanIcon />,
+    },
+    {
+      title: "Thư viện",
+      url: clientPaths.library.list.getPath(),
+      icon: <ImagesIcon />,
     },
     {
       title: "Bạn bè",

@@ -6,6 +6,7 @@ export const spaceKeys = {
   all: ["space"] as const,
   mySpaces: () => [...spaceKeys.all, "my-spaces"] as const,
   detail: (id: string) => [...spaceKeys.all, "detail", id] as const,
+  myRoleInSpace: (id: string) => [...spaceKeys.all, "my-role", id] as const,
   mySpacesInfinite: (request: { q: string; size: number }) => [...spaceKeys.all, "my-spaces", "infinite", request] as const,
   membersInfinite: (request: { id: string; q: string; size: number }) =>
     [...spaceKeys.all, "members", "infinite", request] as const,
@@ -18,10 +19,8 @@ export const useMySpaces = () => {
   const query = useQuery({
     queryKey: spaceKeys.mySpaces(),
     queryFn: async () => {
-      const { data, error } = await SpaceSDK.mySpaces({ query: { q: "", page: 1, size: 1000 } });
-      if (error) {
-        throw new Error(error?.message || "Lỗi khi lấy danh sách không gian.");
-      }
+      const { data } = await SpaceSDK.mySpaces({ query: { q: "", page: 1, size: 1000 } });
+     
       return data?.data ?? [];
     },
     enabled: hasHydrated && !!accessToken,
@@ -48,11 +47,8 @@ export const useDetailSpace = (spaceId?: string) => {
   const query = useQuery({
     queryKey: spaceKeys.detail(rawId),
     queryFn: async () => {
-      const { data, error } = await SpaceSDK.detail({ id: rawId });
-      if (error) {
-        
-        throw new Error(error?.message || "Lỗi khi tải chi tiết không gian");
-      }
+      const { data } = await SpaceSDK.detail({ id: rawId });
+     
       if (data == null) {
         throw new Error("Không tìm thấy không gian");
       }
@@ -69,6 +65,35 @@ export const useDetailSpace = (spaceId?: string) => {
     refetch: query.refetch,
     invalidate: () => {
       queryClient.invalidateQueries({ queryKey: spaceKeys.detail(rawId) });
+    },
+  };
+};
+
+export const useMyRoleInSpace = (spaceId?: string) => {
+  const queryClient = useQueryClient();
+  const { accessToken, hasHydrated } = useAuth();
+  const rawId = (spaceId ?? "").trim();
+
+  const query = useQuery({
+    queryKey: spaceKeys.myRoleInSpace(rawId),
+    queryFn: async () => {
+      const { data } = await SpaceSDK.mySpaceRole({ id: rawId });
+      if (data == null) {
+        throw new Error("Không lấy được vai trò trong không gian");
+      }
+      return data;
+    },
+    enabled: hasHydrated && !!accessToken && rawId.length > 0,
+  });
+
+  return {
+    loading: query.isLoading,
+    data: query.data,
+    error: query.error,
+    fetching: query.isFetching,
+    refetch: query.refetch,
+    invalidate: () => {
+      queryClient.invalidateQueries({ queryKey: spaceKeys.myRoleInSpace(rawId) });
     },
   };
 };
@@ -109,9 +134,7 @@ export const useMySpacesInfinite = (
           size: queryKey.size,
         },
       });
-      if (response.error) {
-        throw new Error(response.error?.message || "Lỗi khi lấy danh sách không gian.");
-      }
+    
 
       const payload = response.data;
       if (!payload) {
@@ -180,6 +203,8 @@ export type UseSpaceMembersInfiniteRequest = {
     q?: string;
     size?: number;
   };
+  /** Gộp thêm điều kiện (vd. chỉ fetch khi sheet thành viên mở). Mặc định true. */
+  enabled?: boolean;
 };
 
 /**
@@ -204,7 +229,8 @@ export const useSpaceMembersInfinite = (
     size: Number.isFinite(size) && size > 0 ? size : 10,
   };
 
-  const enabled = hasHydrated && !!accessToken && spaceId.length > 0;
+  const gate = request.enabled !== false;
+  const enabled = gate && hasHydrated && !!accessToken && spaceId.length > 0;
 
   const query = useInfiniteQuery({
     queryKey: spaceKeys.membersInfinite(queryKey),
@@ -217,9 +243,7 @@ export const useSpaceMembersInfinite = (
           size: queryKey.size,
         },
       });
-      if (response.error) {
-        throw new Error(response.error?.message || "Lỗi khi lấy danh sách thành viên");
-      }
+     
       const payload = response.data;
       if (!payload) {
         throw new Error("Không có dữ liệu");

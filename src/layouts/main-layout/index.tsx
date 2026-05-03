@@ -14,9 +14,7 @@ import { useWebSocket } from "@/data/connection/ws";
 
 const MainLayout = () => {
   const { user, hasHydrated } = useAuth();
-  useWebSocket();
-  useMyProfile(); // warm cache in background
-  useWeather();
+ 
   const navigate = useNavigate();
   useEffect(() => {
     if (!hasHydrated) return;
@@ -34,7 +32,9 @@ const MainLayout = () => {
       <LoadingPage showFacts={true} subtitle="Đang chuyển đến trang đăng nhập…" />
     );
   }
-
+  useWebSocket();
+  useMyProfile(); // warm cache in background
+  useWeather();
   return (
     <div
       className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-950 text-slate-100"

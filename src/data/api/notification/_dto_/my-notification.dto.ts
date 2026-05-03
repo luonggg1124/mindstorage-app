@@ -1,25 +1,21 @@
-export type NotificationTypeDto = "INVITE_TO_JOIN_SPACE" | "INVITE_TO_JOIN_GROUP" | (string & {});
+import type {
+  IInviteNotificationData,
+  IRoleChangeNotificationData,
+  NotificationType,
+} from "@/data/models/notification";
 
-export interface IMyNotificationDto {
-  id: string; // UUID
+type MyNotificationBase = {
+  id: string;
   userId: number;
   senderId: number | null;
-  title: string;
-  content: string;
-  type: NotificationTypeDto;
-  data: string | null; // JSON string
   read: boolean;
   readAt: string | null;
-  createdAt: string; // ISO string
-}
-
-export type IInviteNotificationDataDto = {
-  invitationId?: string;
-  invitationStatus?: string;
-  entityId?: string;
-  entityName?: string;
-  entityType?: string;
-  senderId?: number;
-  senderName?: string;
+  createdAt: string;
 };
 
+/** `type` + `data` khớp cặp (discriminated union). */
+export type IMyNotificationDto = MyNotificationBase &
+  (
+    | { type: NotificationType.INVITE; data: IInviteNotificationData | null }
+    | { type: NotificationType.ROLE_CHANGED; data: IRoleChangeNotificationData | null }
+  );

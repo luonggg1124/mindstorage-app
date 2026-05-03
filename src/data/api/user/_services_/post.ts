@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { UserSDK } from "../_sdk_";
 import { userKeys } from "./get";
+import { ApiErrorItem } from "@/data/types";
 
 export const useValidUsernamePassword = () => {
     const queryClient = useQueryClient();
@@ -32,7 +33,7 @@ export const useValidUsernamePassword = () => {
         mutate: mutation.mutate,
         mutateAsync: mutation.mutateAsync,
         data: mutation.data,
-        error: mutation.data?.error,
+        error: mutation?.error as ApiErrorItem | null,
         isPending: mutation.isPending,
         isSuccess: mutation.isSuccess,
         isError: mutation.isError,

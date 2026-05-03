@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router";
 
 import clientPaths from "@/paths/client";
 import { useDetailGroup } from "@/data/api/group";
-import { formatRelative } from "@/utils/date";
+
 import { useCreateTopic, useTopicsByGroup, useUpdateTopic } from "@/data/api/topic";
 import { CreateTopicModal } from "./components/create-topic-modal";
 import { TopicTabs } from "./components/topic-tabs";
@@ -125,9 +125,7 @@ const GroupPage = () => {
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300/90">
               {group.description?.trim() ? group.description : "Chưa có mô tả."}
             </p>
-            <p className="mt-3 text-xs text-slate-300/70">
-              Tạo: {formatRelative(group.createdAt, "—")} · Cập nhật: {formatRelative(group.updatedAt, "—")}
-            </p>
+           
           </div>
 
           <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
