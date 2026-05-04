@@ -126,16 +126,6 @@ const MyProfilePage = () => {
             <p className="mt-2 text-3xl font-semibold text-slate-100">{myProfile?.spaceMembersCount ?? "—"}</p>
             <p className="mt-1 text-xs text-slate-300/70">Số không gian bạn đang tham gia</p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur">
-            <p className="text-xs text-slate-300/70">Followers</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-100">{myProfile?.followersCount ?? "0"}</p>
-            <p className="mt-1 text-xs text-slate-300/70">Lượt theo dõi</p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur">
-            <p className="text-xs text-slate-300/70">Following</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-100">{myProfile?.followingCount ?? "0"}</p>
-            <p className="mt-1 text-xs text-slate-300/70">Bạn đang theo dõi</p>
-          </div>
         </div>
       )}
 

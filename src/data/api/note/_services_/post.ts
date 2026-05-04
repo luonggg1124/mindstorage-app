@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ApiErrorItem } from "@/data/types";
 import { NoteSDK } from "../_sdk_";
 import { noteKeys } from "./get";
+import { userKeys } from "@/data/api/user/_services_/get";
 
 export const useCreateNote = () => {
   const queryClient = useQueryClient();
@@ -14,6 +15,7 @@ export const useCreateNote = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: noteKeys.all });
+      queryClient.invalidateQueries({ queryKey: userKeys.myProfile() });
     },
   });
 

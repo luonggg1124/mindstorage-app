@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/data/api/auth";
 import { step3Schema } from "../schema";
 import type { Control, UseFormSetValue } from "react-hook-form";
@@ -25,6 +25,15 @@ export function ThirdStep({
   const code = useWatch({ control, name: "code" }) ?? "";
   const agree = useWatch({ control, name: "agree" }) ?? false;
   const isCodeSent = Boolean(session);
+  const [cooldownSec, setCooldownSec] = useState(0);
+
+  useEffect(() => {
+    if (cooldownSec <= 0) return;
+    const t = window.setInterval(() => {
+      setCooldownSec((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => window.clearInterval(t);
+  }, [cooldownSec]);
 
   const gate = useMemo(() => {
     if (verifyEmailState.error?.message) return { canProceed: false, errorText: verifyEmailState.error.message };
@@ -43,6 +52,8 @@ export function ThirdStep({
   useEffect(() => {
     onGateChange(gate);
   }, [gate, onGateChange]);
+
+  const canSendCode = !verifyEmailState.isLoading && cooldownSec === 0;
 
   return (
     <div className="space-y-4">
@@ -64,9 +75,11 @@ export function ThirdStep({
           />
           <Button
             type="button"
-            disabled={verifyEmailState.isLoading}
+            disabled={!canSendCode}
             onClick={async () => {
               if (!/^\S+@\S+\.\S+$/.test(email.trim())) return;
+              // Chống spam: khóa 1 phút 30 giây sau khi bấm gửi
+              setCooldownSec(90);
               const data = await verifyEmail(email.trim());
               if (!data?.session) return;
               setValue("session", data.session, { shouldDirty: true, shouldValidate: true });
@@ -76,7 +89,7 @@ export function ThirdStep({
             size="sm"
             className="h-9 rounded-full border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800/60"
           >
-            Gửi mã
+            {cooldownSec > 0 ? `Gửi lại (${cooldownSec}s)` : "Gửi mã"}
           </Button>
         </div>
         <p className="mt-1 text-xs text-slate-400">

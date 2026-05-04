@@ -5,7 +5,6 @@ import { NavMain } from "@/layouts/main-layout/components/nav-main";
 import { NavUser } from "@/layouts/main-layout/components/nav-user";
 import { SidebarSearch } from "@/layouts/main-layout/components/sidebar-search";
 import { SidebarNotifications } from "@/layouts/main-layout/components/sidebar-notifications";
-import { SidebarFriends } from "@/layouts/main-layout/components/sidebar-friends";
 import { Separator } from "@/components/ui/separator";
 import {
   Sidebar,
@@ -17,13 +16,12 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import clientPaths from "@/paths/client";
-import { BellIcon, CommandIcon, FolderKanbanIcon, HouseIcon, ImagesIcon, SearchIcon, UsersIcon } from "lucide-react";
+import { BellIcon, CommandIcon, FolderKanbanIcon, HouseIcon, ImagesIcon, SearchIcon } from "lucide-react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [notificationsOpen, setNotificationsOpen] = React.useState(false);
   const [notificationsUnread, setNotificationsUnread] = React.useState(0);
-  const [friendsOpen, setFriendsOpen] = React.useState(false);
 
   const navigationItems = [
     {
@@ -40,11 +38,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Thư viện",
       url: clientPaths.library.list.getPath(),
       icon: <ImagesIcon />,
-    },
-    {
-      title: "Bạn bè",
-      icon: <UsersIcon />,
-      onClick: () => setFriendsOpen(true),
     },
   ];
 
@@ -111,7 +104,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         onOpenChange={setNotificationsOpen}
         onUnreadCountChange={setNotificationsUnread}
       />
-      <SidebarFriends open={friendsOpen} onOpenChange={setFriendsOpen} />
     </Sidebar>
   );
 }

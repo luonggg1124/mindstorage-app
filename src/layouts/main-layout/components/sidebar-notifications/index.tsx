@@ -3,6 +3,7 @@ import * as React from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import ScrollInfinite from "@/components/custom/scroll-infinite";
 import { useAcceptInvitation, useRejectInvitation } from "@/data/api/invitation";
+import { spaceKeys } from "@/data/api/space";
 import {
   useReadAllNotifications,
   useReadOneNotification,
@@ -15,6 +16,7 @@ import { normalizeNotificationType, NotificationType } from "@/data/models/notif
 import NotificationBody from "./notification-body";
 import { getRelativeTime } from "@/utils/date";
 import { InvitationStatus } from "@/data/models/invitation";
+import { useQueryClient } from "@tanstack/react-query";
 
 type SidebarNotificationsProps = {
   open: boolean;
@@ -23,6 +25,7 @@ type SidebarNotificationsProps = {
 };
 
 export function SidebarNotifications({ open, onOpenChange, onUnreadCountChange }: SidebarNotificationsProps) {
+  const queryClient = useQueryClient();
   const { unreadCount } = useNotification();
   const acceptInvitation = useAcceptInvitation();
   const rejectInvitation = useRejectInvitation();
@@ -162,6 +165,7 @@ export function SidebarNotifications({ open, onOpenChange, onUnreadCountChange }
                         if (!invitationId) return;
                         await acceptInvitation.mutateAsync({ id: invitationId });
                         notificationsInfinite.invalidate();
+                        queryClient.invalidateQueries({ queryKey: spaceKeys.all });
                       }}
                       className="inline-flex flex-1 items-center justify-center rounded-full bg-indigo-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-400 disabled:opacity-50"
                       disabled={!canAct || busy || readingThis}
@@ -175,6 +179,7 @@ export function SidebarNotifications({ open, onOpenChange, onUnreadCountChange }
                         if (!invitationId) return;
                         await rejectInvitation.mutateAsync({ id: invitationId });
                         notificationsInfinite.invalidate();
+                        queryClient.invalidateQueries({ queryKey: spaceKeys.all });
                       }}
                       className="inline-flex flex-1 items-center justify-center rounded-full border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/10 disabled:opacity-50"
                       disabled={!canAct || busy || readingThis}

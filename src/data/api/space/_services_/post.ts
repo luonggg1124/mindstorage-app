@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ApiErrorItem } from "@/data/types";
 import { SpaceSDK } from "../_sdk_";
 import { spaceKeys } from "./get";
+import { userKeys } from "@/data/api/user/_services_/get";
 
 export const useCreateSpace = () => {
   const queryClient = useQueryClient();
@@ -18,7 +19,7 @@ export const useCreateSpace = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: spaceKeys.all });
-      
+      queryClient.invalidateQueries({ queryKey: userKeys.myProfile() });
     },
   });
 
@@ -50,7 +51,7 @@ export const useUpdateSpace = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: spaceKeys.all });
-     
+      queryClient.invalidateQueries({ queryKey: userKeys.myProfile() });
     },
   });
 

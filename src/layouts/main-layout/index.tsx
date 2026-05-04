@@ -16,6 +16,12 @@ const MainLayout = () => {
   const { user, hasHydrated } = useAuth();
  
   const navigate = useNavigate();
+
+ 
+  useWebSocket();
+  useMyProfile({ enabled: Boolean(user) }); 
+  useWeather();
+
   useEffect(() => {
     if (!hasHydrated) return;
     if (!user) {
@@ -32,9 +38,6 @@ const MainLayout = () => {
       <LoadingPage showFacts={true} subtitle="Đang chuyển đến trang đăng nhập…" />
     );
   }
-  useWebSocket();
-  useMyProfile(); // warm cache in background
-  useWeather();
   return (
     <div
       className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-950 text-slate-100"

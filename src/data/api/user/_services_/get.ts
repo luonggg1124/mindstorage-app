@@ -19,14 +19,14 @@ const fetchMyProfile = async () => {
   return data;
 };
 
-export const useMyProfile = () => {
+export const useMyProfile = (opts?: { enabled?: boolean }) => {
   const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: userKeys.myProfile(),
     queryFn: fetchMyProfile,
     retry: false,
-    
+    enabled: opts?.enabled ?? true,
     refetchOnWindowFocus: false,
   });
 

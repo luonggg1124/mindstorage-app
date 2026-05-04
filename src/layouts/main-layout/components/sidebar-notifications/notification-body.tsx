@@ -31,19 +31,49 @@ export default function NotificationBody({ row, dimmed }: NotificationBodyProps)
   if (kind === NotificationType.INVITE) {
     const invite = row.data as IInviteNotificationData | null;
     const where = inviteEntityLabel(invite);
+    const status = (invite?.invitationStatus ?? "").trim().toUpperCase();
+    const actor = invite?.senderName ? <span className={hl}>{invite.senderName}</span> : <span>Một thành viên</span>;
+    const entityNode = invite?.entityName ? (
+      <span className={hl}>{invite.entityName}</span>
+    ) : invite?.entityId ? (
+      <span className={hl}>{invite.entityId}</span>
+    ) : (
+      <span>…</span>
+    );
+
+    if (status === "ACCEPTED") {
+      return (
+        <>
+          <p className={titleClass}>Lời mời đã được chấp nhận</p>
+          <p className={bodyClass}>
+            {actor}
+            <span> đã chấp nhận lời mời vào {where} </span>
+            {entityNode}
+          </p>
+        </>
+      );
+    }
+
+    if (status === "REJECTED") {
+      return (
+        <>
+          <p className={titleClass}>Lời mời đã bị từ chối</p>
+          <p className={bodyClass}>
+            {actor}
+            <span> đã từ chối lời mời vào {where} </span>
+            {entityNode}
+          </p>
+        </>
+      );
+    }
+
     return (
       <>
         <p className={titleClass}>Lời mời tham gia {where}</p>
         <p className={bodyClass}>
-          {invite?.senderName ? <span className={hl}>{invite.senderName}</span> : <span>Một thành viên</span>}
+          {actor}
           <span> mời bạn tham gia {where} </span>
-          {invite?.entityName ? (
-            <span className={hl}>{invite.entityName}</span>
-          ) : invite?.entityId ? (
-            <span className={hl}>{invite.entityId}</span>
-          ) : (
-            <span>…</span>
-          )}
+          {entityNode}
         </p>
       </>
     );

@@ -162,7 +162,7 @@ export function TopicTabs({
             <AlertDialogTitle>Có chắc xóa không?</AlertDialogTitle>
             <AlertDialogDescription>
               Bạn sắp xóa chủ đề <span className="font-medium text-foreground">{confirmDeleteTopic?.name ?? "—"}</span>.
-              Thao tác này hiện chỉ áp dụng trên UI (chưa gọi API).
+              
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

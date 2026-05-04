@@ -2,10 +2,12 @@ import { useAuth } from "@/data/api/auth";
 import { myNotificationsKeys, notificationKeys, useNotificationStore } from "@/data/api/notification";
 import type { IInviteNotificationData, IRoleChangeNotificationData } from "@/data/models/notification";
 import { INotification, normalizeNotificationType, NotificationType } from "@/data/models/notification";
-import { toast } from "@/lib/toast";
+import { initAuth } from "@/data/api/auth/_services_/init-auth";
+import { userKeys } from "@/data/api/user/_services_/get";
+  import { toast } from "@/lib/toast";
 import { Client } from "@stomp/stompjs";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 function toastInviteWhere(invite: IInviteNotificationData | null): "không gian" | "nhóm" {
   const t = (invite?.entityType ?? "").toUpperCase();
@@ -19,18 +21,31 @@ function WsNotificationToastContent({ notification }: { notification: INotificat
   const bar = "mt-0.5 h-10 w-1 shrink-0 rounded-full bg-amber-400/95 shadow-[0_0_12px_rgba(251,191,36,0.35)]";
   const hl = "font-semibold text-amber-200";
   const kind = normalizeNotificationType(notification.type, notification.data);
-
+  
   if (kind === NotificationType.INVITE) {
     const invite = notification.data as IInviteNotificationData | null;
     const where = toastInviteWhere(invite);
+    const status = (invite?.invitationStatus ?? "").trim().toUpperCase();
     return (
       <div className="flex gap-3 text-left">
         <div className={bar} aria-hidden />
         <div className="min-w-0 flex-1">
-          <p className="text-[13px] font-bold tracking-tight text-white">Lời mời tham gia {where}</p>
+          <p className="text-[13px] font-bold tracking-tight text-white">
+            {status === "ACCEPTED"
+              ? "Lời mời đã được chấp nhận"
+              : status === "REJECTED"
+                ? "Lời mời đã bị từ chối"
+                : `Lời mời tham gia ${where}`}
+          </p>
           <p className="mt-1 text-[12px] leading-relaxed text-slate-200/95">
             {invite?.senderName ? <span className={hl}>{invite.senderName}</span> : <span>Một thành viên</span>}
-            <span> mời bạn vào </span>
+            <span>
+              {status === "ACCEPTED"
+                ? ` đã chấp nhận lời mời vào ${where} `
+                : status === "REJECTED"
+                  ? ` đã từ chối lời mời vào ${where} `
+                  : " mời bạn vào "}
+            </span>
             {invite?.entityName ? (
               <span className={hl}>{invite.entityName}</span>
             ) : invite?.entityId ? (
@@ -108,10 +123,30 @@ function WsNotificationToastContent({ notification }: { notification: INotificat
 }
 
 export const useWebSocket = () => {
-  const { accessToken } = useAuth();
+  const { accessToken, refreshToken } = useAuth();
 
   const queryClient = useQueryClient();
   const { setUnreadCount, incrementUnread } = useNotificationStore();
+  const refreshingRef = useRef(false);
+
+  const tryRefreshToken = async (reason?: unknown) => {
+    if (refreshingRef.current) return;
+    if (!refreshToken) return;
+
+    refreshingRef.current = true;
+    try {
+      await initAuth();
+    } catch (e) {
+      console.error("WS refresh token failed:", reason ?? e);
+    } finally {
+      refreshingRef.current = false;
+    }
+  };
+
+  const isUnauthorizedLike = (value: unknown): boolean => {
+    const text = typeof value === "string" ? value : JSON.stringify(value ?? "");
+    return /401|unauthoriz|forbidden|jwt|token/i.test(text);
+  };
   useEffect(() => {
     if (!accessToken) return () => {};
     const client = new Client({
@@ -135,18 +170,36 @@ export const useWebSocket = () => {
           );
           queryClient.invalidateQueries({ queryKey: myNotificationsKeys.all });
           queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+          queryClient.invalidateQueries({ queryKey: userKeys.myProfile() });
           incrementUnread();
         });
         client.subscribe("/user/queue/notifications/count", (message) => {
           const count = JSON.parse(message.body) as number;
           setUnreadCount(count);
+         
         });
       },
       onStompError: (frame) => {
         console.error("Stomp error:", frame);
+        const msg = frame.headers?.message ?? "";
+        const body = frame.body ?? "";
+        if (isUnauthorizedLike(msg) || isUnauthorizedLike(body)) {
+          void tryRefreshToken({ msg, body });
+        }
+      },
+      onWebSocketClose: (evt) => {
+        // Nếu token hết hạn / bị từ chối, backend thường đóng socket.
+        if (isUnauthorizedLike(evt?.reason) || evt?.code === 1008) {
+          void tryRefreshToken(evt);
+        }
+      },
+      onWebSocketError: (evt) => {
+        if (isUnauthorizedLike(evt)) {
+          void tryRefreshToken(evt);
+        }
       },
     });
     client.activate();
     return () => client.deactivate();
-  }, [accessToken, queryClient, incrementUnread, setUnreadCount]);
+  }, [accessToken, queryClient, incrementUnread, refreshToken, setUnreadCount]);
 };

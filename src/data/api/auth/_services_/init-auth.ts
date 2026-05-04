@@ -10,7 +10,7 @@ import { useAuthStore } from "./store";
 export async function bootstrapAuthAfterPersist(): Promise<void> {
   try {
     const { refreshToken, setAccessToken, setRefreshToken, setUser, clear } = useAuthStore.getState();
-    console.log('refreshToken', refreshToken);
+   
     
     if (!refreshToken) return;
 
